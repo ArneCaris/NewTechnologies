@@ -1,30 +1,72 @@
 import React, {Component} from 'react';
+import { Image } from 'react-native';
 import {Platform, StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView} from 'react-native';
 
 export default class Home extends Component {
+
+    constructor() {
+        super();
+        this.state = {
+            chats: [],
+            messages: [],
+        }
+    }
+
+    componentDidMount() {
+        fetch("http://newtechproject.ddns.net:4000/groups")
+            .then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({ chats: responseJson }, () => console.log(this.state.chats[0].groupName))
+            })
+            .catch((error) => {
+            console.error(error);
+            });
+        fetch("http://newtechproject.ddns.net:4000/messages")
+            .then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({ messages: responseJson }, () => console.log(this.state.messages[0].message))
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
     render() {
-        return (
+
+        if (this.state.chats.length !== 0 && this.state.messages.length !== 0) {
+            
+            return (
             <View style={styles.container}>
                 
                 <View style={styles.header}>
-                    <Text style={styles.headerText}>- NOTER -</Text>
+                    <Text style={styles.headerText}> ChatApp </Text>
                 </View>
 
                 <ScrollView style={styles.scrollContainer}>
+                    <View style={styles.chatBar}>
+                        <Text style={styles.name}>{this.state.chats[0].groupName}</Text>
+                        <Text style={styles.message}>{this.state.messages[this.state.messages.length-1].message}</Text>
+                    </View>
 
                 </ScrollView>
 
-                <View stye={styles.footer}>
+                {/* <View stye={styles.footer}>
                     <TextInput 
                         style={styles.textInput} 
                         placeholder='>note' 
                         placeholderTextColor='white' 
                         underlineColorAndroid='transparent'>
                     </TextInput>
-                </View>
+                </View> */}
 
             </View>
-        );
+            );
+        } else {
+            return(
+                <Text>Loading ..</Text>
+            )
+        }
+        
     }
 }
 
@@ -33,16 +75,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        backgroundColor: '#E91E63',
-        alignItems: 'center',
+        backgroundColor: '#a11485',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        borderBottomWidth: 10,
-        borderBottomColor: '#ddd',
     },
     headerText: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 22,
         padding: 26,
+        fontWeight: 'bold'
     },
     scrollContainer: {
         flex: 1,
@@ -79,6 +120,21 @@ const styles = StyleSheet.create({
     addButtonText: {
         color: '#fff',
         fontSize: 24,
+    },
+    chatBar: {
+        height: 85,
+        borderRadius: 4,
+        borderWidth: 0.5,
+        borderColor: '#d6d7da',
+    },
+    name: {
+        left: 75,
+        top: 14,
+        fontWeight: 'bold',
+    },
+    message: {
+        left: 75,
+        top: 22,
     }
     
 });
