@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import { Image } from 'react-native';
+import { Image, Modal, Button } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import {Platform, StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView} from 'react-native';
 
 export default class Home extends Component {
@@ -9,11 +10,12 @@ export default class Home extends Component {
         this.state = {
             chats: [],
             messages: [],
+            showModal: false,
         }
     }
 
     componentDidMount() {
-        fetch("http://newtechproject.ddns.net:4000/groups")
+        fetch("http://newtechproject.ddns.net:4000/chats")
             .then((response) => response.json())
             .then((responseJson) => {
                 this.setState({ chats: responseJson }, () => console.log(this.state.chats[0].groupName))
@@ -29,6 +31,28 @@ export default class Home extends Component {
             .catch((error) => {
                 console.error(error);
             });
+
+        const value = AsyncStorage.getItem('once');
+
+        if (value !== null) {
+            value.then((ret) => {
+            if (ret === null) {
+                // this is the first time
+                // show the modal
+                // save the value
+
+                AsyncStorage.setItem('once', 'bazinga');
+                this.setState({
+                    showModal: true,
+                });
+        
+            } else {
+                // this is the second time
+                // skip the modal
+        
+            }
+            }).catch(err => alert(err.toString()));
+        }
     }
 
     render() {
@@ -37,9 +61,22 @@ export default class Home extends Component {
             
             return (
             <View style={styles.container}>
+
+                <Modal visible={this.state.showModal}>
+                    <View style={styles.explanationText}>
+                        <Text style={styles.noteMsg}>Welcome to ChatApp!{"\n"}Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that somebody else used before you.</Text>
+                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
+                        <TextInput
+                            style={styles.TextInput}
+                            placeholder="display name"
+                        />
+                        <Button style={styles.addbutton} title="Let's go!" onPress={() => this.setState({ showModal: false })}/>
+                    </View>
+                </Modal>
                 
                 <View style={styles.header}>
                     <Text style={styles.headerText}> ChatApp </Text>
+                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
                 </View>
 
                 <ScrollView style={styles.scrollContainer}>
@@ -79,11 +116,17 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         justifyContent: 'center',
     },
+    explanationText: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center', 
+    },
     headerText: {
         color: 'white',
         fontSize: 22,
         padding: 26,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        alignItems: 'center',
     },
     scrollContainer: {
         flex: 1,
@@ -116,6 +159,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 8,
+        color: 'black',
     },
     addButtonText: {
         color: '#fff',
@@ -135,6 +179,12 @@ const styles = StyleSheet.create({
     message: {
         left: 75,
         top: 22,
+    },
+    noteMsg: {
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        textAlign: 'center',
+        
     }
     
 });
