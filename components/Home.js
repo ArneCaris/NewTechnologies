@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import { Image, Modal, Button } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
-import {Platform, StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView} from 'react-native';
+import {Platform, StyleSheet, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 
 export default class Home extends Component {
 
@@ -10,15 +10,21 @@ export default class Home extends Component {
         this.state = {
             chats: [],
             messages: [],
+            displayNames: [],
+            chatData: [],
             showModal: false,
+            displayName: "",
+            storedName: ""
         }
+        this.addName = this.addName.bind(this);
+        this.addMore = this.addMore.bind(this);
     }
 
     componentDidMount() {
         fetch("http://newtechproject.ddns.net:4000/chats")
             .then((response) => response.json())
             .then((responseJson) => {
-                this.setState({ chats: responseJson }, () => console.log(this.state.chats[0].groupName))
+                this.setState({ chats: responseJson }, () => console.log("."))
             })
             .catch((error) => {
             console.error(error);
@@ -26,7 +32,15 @@ export default class Home extends Component {
         fetch("http://newtechproject.ddns.net:4000/messages")
             .then((response) => response.json())
             .then((responseJson) => {
-                this.setState({ messages: responseJson }, () => console.log(this.state.messages[0].message))
+                this.setState({ messages: responseJson }, () => console.log(".."))
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+        fetch("http://newtechproject.ddns.net:4000/displaynames")
+            .then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({ displayNames: responseJson }, () => console.log("..."))
             })
             .catch((error) => {
                 console.error(error);
@@ -53,48 +67,137 @@ export default class Home extends Component {
             }
             }).catch(err => alert(err.toString()));
         }
+        
+        var name = AsyncStorage.getItem('name');
+
+        if (name !== null) {
+            name.then((ret) => {
+            if (ret === null) {
+                // this is the first time
+                // save the name
+
+                AsyncStorage.setItem('name', this.state.displayName);
+        
+            } else {
+                // this is the second time
+                // skip the modal
+                name = AsyncStorage.getItem('name');
+                name.then((e) => {
+                    this.setState({ storedName: e })
+                })
+            }
+            }).catch(err => alert(err.toString()));
+        }
+        
+    }
+
+    addMore() {
+        let newArray = this.state.displayNames;
+        let nameArray = [];
+        for (var i = 0; i < newArray.length; i++) {
+            nameArray.push(newArray[i].displayName)
+            var index = nameArray.indexOf(this.state.storedName)
+        }
+        let chatArray = this.state.displayNames[index].chats.map((data) => {
+            return(
+                <View style={styles.chatBar}>
+                    <Text style={styles.name}>{this.state.messages[this.state.messages.length-1].chat}</Text>
+                    <Text style={styles.message}>{this.state.messages[this.state.messages.length-1].message}</Text>
+                </View>
+            )
+        })
+    }
+
+    addName() {
+        if (this.state.displayName.length <= 2) {
+            Alert.alert('Oops too short!',"Your display name needs to have at least 3 characters.")
+        } else {
+            fetch("http://newtechproject.ddns.net:4000/displaynames", {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ displayName: this.state.displayName })
+            }).then(function(response) {
+                return response;
+            }).catch(function(error) {
+                console.log("error " + error.message);
+                throw error;
+            })
+            this.setState({ showModal: false  }); 
+            AsyncStorage.setItem('name', this.state.displayName)  
+            this.componentDidMount();
+        }
+        
     }
 
     render() {
 
-        if (this.state.chats.length !== 0 && this.state.messages.length !== 0) {
+
+        if (this.state.chats.length !== 0 && this.state.messages.length !== 0 && this.state.displayNames.length !== 0) {
+
+            let newArray = this.state.displayNames;
+            let nameArray = [];
+            let latestMessage = "";
+            for (var i = 0; i < newArray.length; i++) {
+                nameArray.push(newArray[i].displayName)
+                var index = nameArray.indexOf(this.state.storedName)
+            }
+            console.log(this.state.chats)
+            let chatArray = this.state.displayNames[index].chats.map((data) => {
+                console.log(data)
+                fetch("http://newtechproject.ddns.net:4000/messages?chat=" + data)
+                    .then((response) => response.json())
+                    .then((responseJson) => {
+                        var latestMessageList = responseJson
+                        latestMessage = latestMessageList[latestMessageList.length-1]
+                        // console.log(latestMessage)
+                        
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+                return(
+                    <View key={data} style={styles.chatBar}>
+                        <Text style={styles.name}>{data}</Text>
+                        <Text style={styles.message}></Text>
+                    </View>
+                )
+            })
             
             return (
             <View style={styles.container}>
 
                 <Modal visible={this.state.showModal}>
                     <View style={styles.explanationText}>
-                        <Text style={styles.noteMsg}>Welcome to ChatApp!{"\n"}Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that somebody else used before you.</Text>
+                        <Text style={styles.title}>Welcome to ChatApp!</Text>
+                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
                         <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <TextInput
                             style={styles.TextInput}
-                            placeholder="display name"
+                            placeholder="username                                             "
+                            maxLength={15}
+                            ref="displayName"
+                            onChangeText={(displayName) => this.setState({ displayName: displayName }, () => console.log(this.state.displayName))}
+                            vale={this.state.displayName}
                         />
-                        <Button style={styles.addbutton} title="Let's go!" onPress={() => this.setState({ showModal: false })}/>
+                        <View style={styles.modalButton}>
+                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.setState({ showModal: true }) }/>
+                        </View>
                     </View>
                 </Modal>
                 
                 <View style={styles.header}>
-                    <Text style={styles.headerText}> ChatApp </Text>
-                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
+                    <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
+                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.addMore()}></Button>
                 </View>
 
                 <ScrollView style={styles.scrollContainer}>
-                    <View style={styles.chatBar}>
-                        <Text style={styles.name}>{this.state.chats[0].groupName}</Text>
-                        <Text style={styles.message}>{this.state.messages[this.state.messages.length-1].message}</Text>
-                    </View>
+                    
+                    {chatArray}
 
                 </ScrollView>
-
-                {/* <View stye={styles.footer}>
-                    <TextInput 
-                        style={styles.textInput} 
-                        placeholder='>note' 
-                        placeholderTextColor='white' 
-                        underlineColorAndroid='transparent'>
-                    </TextInput>
-                </View> */}
 
             </View>
             );
@@ -119,7 +222,9 @@ const styles = StyleSheet.create({
     explanationText: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center', 
+        justifyContent: 'center',
+        marginLeft: 10,
+        marginRight: 10, 
     },
     headerText: {
         color: 'white',
@@ -130,40 +235,17 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         flex: 1,
-        marginBottom: 100,
+        marginBottom: 10,
     },
-    footer: {
+    modalButton: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 10,
-    },
-    textInput: {
-        alignSelf: 'stretch',
-        color: '#fff',
-        padding: 20,
-        backgroundColor: '#252525',
-        borderTopWidth: 2,
-        borderTopColor: '#ededed',
-    },
-    addbutton: {
-        position: 'absolute',
-        zIndex: 11,
-        right: 20,
-        bottom: 90,
-        backgroundColor: '#E91E63',
-        width: 90,
-        height: 90,
-        borderRadius: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 8,
-        color: 'black',
+        margin: 16,
+        right: 10,
+        bottom: 10,
     },
     addButtonText: {
         color: '#fff',
-        fontSize: 24,
+        fontSize: 500,
     },
     chatBar: {
         height: 85,
@@ -180,11 +262,35 @@ const styles = StyleSheet.create({
         left: 75,
         top: 22,
     },
-    noteMsg: {
+    title: {
+        marginTop: -300,
+        fontSize: 30,
+        color: "#a11485",
         fontWeight: 'bold',
         alignSelf: 'center',
         textAlign: 'center',
-        
+    },
+    text: {
+        top: 100,
+        fontSize: 15,
+        alignSelf: 'center',
+        textAlign: 'center',
+    },
+    noteMsg: {
+        top: 100,
+        fontSize: 20,
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        textAlign: 'center',
+    },
+    TextInput: {
+        top: 180,
+        marginBottom: 50,
+        borderRadius: 2,
+        borderWidth: 1.1,
+        borderColor: '#a11485',
+        marginTop: 50,
     }
+
     
 });
