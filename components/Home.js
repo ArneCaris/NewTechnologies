@@ -88,24 +88,39 @@ export default class Home extends Component {
             }
             }).catch(err => alert(err.toString()));
         }
+
         
     }
 
     addMore() {
-        let newArray = this.state.displayNames;
-        let nameArray = [];
-        for (var i = 0; i < newArray.length; i++) {
-            nameArray.push(newArray[i].displayName)
-            var index = nameArray.indexOf(this.state.storedName)
+        if (this.state.displayNames.length !== 0) {
+            let newArray = this.state.displayNames;
+            let nameArray = [];
+            for (var i = 0; i < newArray.length; i++) {
+                nameArray.push(newArray[i].displayName)
+                var index = nameArray.indexOf(this.state.storedName)
+            }
+            global.chatArray = this.state.displayNames[index].chats.map((data) => {
+                fetch("http://newtechproject.ddns.net:4000/chats?chatName=" + data)
+                    .then((response) => response.json())
+                    .then((responseJson) => {
+                        global.messageArray = responseJson[0].latestMessage
+                        // console.log(global.messageArray)
+                        
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+                console.log(global.messageArray)
+                return(
+                    <View key={data} style={styles.chatBar}>
+                        <Text style={styles.name}>{data}</Text>
+                        <Text style={styles.message}>{global.messageArray}</Text>
+                    </View>
+                )
+            })
         }
-        let chatArray = this.state.displayNames[index].chats.map((data) => {
-            return(
-                <View style={styles.chatBar}>
-                    <Text style={styles.name}>{this.state.messages[this.state.messages.length-1].chat}</Text>
-                    <Text style={styles.message}>{this.state.messages[this.state.messages.length-1].message}</Text>
-                </View>
-            )
-        })
+        
     }
 
     addName() {
@@ -137,30 +152,8 @@ export default class Home extends Component {
 
         if (this.state.chats.length !== 0 && this.state.messages.length !== 0 && this.state.displayNames.length !== 0) {
 
-            let newArray = this.state.displayNames;
-            let nameArray = [];
-            let messageArray = []
-            for (var i = 0; i < newArray.length; i++) {
-                nameArray.push(newArray[i].displayName)
-                var index = nameArray.indexOf(this.state.storedName)
-            }
-            let chatArray = this.state.displayNames[index].chats.map((data) => {
-                fetch("http://newtechproject.ddns.net:4000/chats?chatName=" + data)
-                    .then((response) => response.json())
-                    .then((responseJson) => {
-                        messageArray.push(responseJson[0].latestMessage)
-                        console.log(messageArray)
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                    });
-                return(
-                    <View key={data} style={styles.chatBar}>
-                        <Text style={styles.name}>{data}</Text>
-                        <Text style={styles.message}>{messageArray}</Text>
-                    </View>
-                )
-            })
+            // console.log(this.state.chatData)
+            this.addMore();
             
             return (
             <View style={styles.container}>
