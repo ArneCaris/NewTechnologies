@@ -139,21 +139,17 @@ export default class Home extends Component {
 
             let newArray = this.state.displayNames;
             let nameArray = [];
-            let latestMessage = "";
+            let messageArray = []
             for (var i = 0; i < newArray.length; i++) {
                 nameArray.push(newArray[i].displayName)
                 var index = nameArray.indexOf(this.state.storedName)
             }
-            console.log(this.state.chats)
             let chatArray = this.state.displayNames[index].chats.map((data) => {
-                console.log(data)
-                fetch("http://newtechproject.ddns.net:4000/messages?chat=" + data)
+                fetch("http://newtechproject.ddns.net:4000/chats?chatName=" + data)
                     .then((response) => response.json())
                     .then((responseJson) => {
-                        var latestMessageList = responseJson
-                        latestMessage = latestMessageList[latestMessageList.length-1]
-                        // console.log(latestMessage)
-                        
+                        messageArray.push(responseJson[0].latestMessage)
+                        console.log(messageArray)
                     })
                     .catch((error) => {
                         console.error(error);
@@ -161,7 +157,7 @@ export default class Home extends Component {
                 return(
                     <View key={data} style={styles.chatBar}>
                         <Text style={styles.name}>{data}</Text>
-                        <Text style={styles.message}></Text>
+                        <Text style={styles.message}>{messageArray}</Text>
                     </View>
                 )
             })
@@ -169,7 +165,7 @@ export default class Home extends Component {
             return (
             <View style={styles.container}>
 
-                <Modal visible={this.state.showModal}>
+                <Modal visible={this.state.showModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
@@ -183,14 +179,14 @@ export default class Home extends Component {
                             vale={this.state.displayName}
                         />
                         <View style={styles.modalButton}>
-                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.setState({ showModal: true }) }/>
+                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => { this.setState({ showModal: true }); this.addName(); }}/>
                         </View>
                     </View>
                 </Modal>
                 
                 <View style={styles.header}>
                     <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
-                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.addMore()}></Button>
+                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
                 </View>
 
                 <ScrollView style={styles.scrollContainer}>
