@@ -11,9 +11,9 @@ export default class Home extends Component {
         this.state = {
             chats: [],
             messages: [],
-            displayNames: [],
             chatData: [],
-            showModal: true,
+            showWelcomeModal: false,
+            showChangeNameModal: false,
             displayName: "",
             storedName: ""
         }
@@ -85,7 +85,7 @@ export default class Home extends Component {
             console.log("name from async storage is NOT NULL")
             name.then((ret) => {
                 console.log(ret)
-                this.setState({ storedName: ret }, () => this.socket.emit('loginRequestBackEND', {displayName: this.state.storedName}))
+                this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
 
             }).catch(err => alert(err.toString()));
         } else {
@@ -99,44 +99,77 @@ export default class Home extends Component {
         
 
         // this socket for auto login after user selected a name
-        this.socket.on('loginRequestClient', (res, err) => {
+        // this.socket.on('loginRequestResponse', (res, err) => {
             
-            if( res.length === 0 ) {
-                this.setState({showModal: true})
-            } else {
-                console.log("loginRequestClient socket: "+ res.displayName)
-                // this.setState({showModal: false, chats: res.displayName.chats})
-            }
-            // if(err) {
-            //     console.log(err.toString())
-            // } else {
-            //     this.setState({chats: res.displayName[0].chats, showModal: false}, () => {                    
-            //         console.log("(loginRequestClient) STATE: "+ this.state.chats)
-            //     });
-            // }
-
-        })
-
-
-        //nameRequestResponse
-        // this socket for name change
-        // this.socket.on("changeNameRequestResponse", response => {
-        //     if (response !== null) {
-        //         console.log("socket changeNameRequestResponse: " + response)
+        //     if( res.length === 0 ) {
+        //         this.setState({showWelcomeModal: true}, () => console.log("If loginRequestResponse socket length === 0: "+ res.displayName))
+        //     } else {
+        //         this.setState({showChangeNameModal: false},() => console.log("else loginRequestResponse socket: "+ res.displayName));
         //     }
-        // });
+
+        // })
+
+
+        
+        // this socket for name change
+        this.socket.on("loginRequestResponse", res => {
+
+            if (res.response === false) {
+                this.setState({showWelcomeModal: true});
+                Alert.alert(
+                    'Sorry autologin failed',
+                    res.reason,
+                    [
+                        {text: 'Cancel', onPress: () => {console.log("login CANCEL Pressed")}, style: 'cancel'},
+                        {text: 'Retry', onPress: () => { this.submitNameRequest(); console.log('login Retry Pressed')}},
+                    ],
+                    {cancelable: true},
+                );
+                
+               
+            } else {
+                this.setState({chats: res.name[0].chats, showWelcomeModal: false}, () => console.log("131 socket loginRequestResponse: " + res.name[0].chats))
+            }
+        });
+
+        this.socket.on('submitNameRequestResponse', res => {
+            console.log("submitNameRequestResponse", "res.name: ", res);
+                if (res.response === false) {
+                    Alert.alert(
+                        'Sorry autologin failed',
+                        res.reason,
+                        [
+                            {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
+                        ],
+                        {cancelable: false},
+                      );
+                } else {
+                    async () => await AsyncStorage.setItem('name', this.state.displayName );
+                    this.setState({storedName: res.name, showWelcomeModal: false});
+                    console.log("socket submitNameRequestResponse: " + res)
+                }
+        })
 
 
         this.socket.on('changeNameRequestResponse', (res) => {
-            console.log(res.response)
-            if (res.response == "Internal Error" && res.response == 'Booked' ) {
-                () => alert(res.response)
-                console.log(res)
-            } else if (res.response === "Reused" && res.response === "New") {
-                async () => await AsyncStorage.setItem('name', newDisplayName ), () => alert(`${newDisplayName} has been claimed by YOU.`);
-                console.log(res)
+            console.log("changeNameRequestResponse", res);
+            if (res.response === false) {
+                Alert.alert(
+                    'Sorry autologin failed',
+                    res.reason,
+                    [
+                        {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
+                    ],
+                    {cancelable: false},
+                    );
+            } else {
+                async () => await AsyncStorage.setItem('name', res.name );
+                this.setState({storedName: res.name, showChangeNameModal: false});
+                console.log("socket changeNameRequestResponse: " + res)
+                console.log("socket changeNameRequestResponse storedName: " + this.state.storedName)
             }
-        })
+                
+        });
     }
 
         
@@ -166,11 +199,11 @@ export default class Home extends Component {
 
     // displayNameRequest
     submitNameRequest() {
-        this.socket.emit('displayNameRequest', { displayName : this.state.displayName});
+        this.socket.emit('submitNameRequest', { displayName : this.state.displayName})
     }
 
     changeNameRequest() {
-        this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName});
+        this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
     }
     
 
@@ -231,16 +264,14 @@ export default class Home extends Component {
 
     render() {
 
-
-        if (this.state.chats.length !== 0 && this.state.messages.length !== 0 && this.state.displayNames.length !== 0) {
-
             // console.log(this.state.chatData)
             // this.addMore();
             
             return (
             <View style={styles.container}>
 
-                <Modal visible={this.state.showModal} animationType="slide">
+{/* First Time login modal */}
+                <Modal visible={this.state.showWelcomeModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
@@ -250,38 +281,21 @@ export default class Home extends Component {
                             placeholder="username                                             "
                             maxLength={15}
                             ref="displayName"
-                            onChangeText={(displayName) => this.setState({ displayName: displayName }, () => console.log(this.state.displayName))}
+                            value={this.state.displayName}
+                            onSubmitEditing={() => this.submitNameRequest()}
+                            onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
                             vale={this.state.displayName}
                         />
                         <View style={styles.modalButton}>
-                        <Button title="Let's go!" size={100} color="#a11485" onPress={() => { this.setState({ showModal: true }); this.addName(); }}/>
+                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.submitNameRequest() }/>
                         </View>
                     </View>
                 </Modal>
-                
-                <View style={styles.header}>
-                    <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
-                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
-                </View>
 
-                <ScrollView style={styles.scrollContainer}>
-                    
-                    {chatArray}
-
-                </ScrollView>
-
-            </View>
-            );
-        } else {
-            return(
-                // <Text>Loading ..</Text>
-
-
-            <View style={styles.container}>
-
-                <Modal visible={this.state.showModal} animationType="slide">
+{/* When user wants to change name while logged in */}
+                <Modal visible={this.state.showChangeNameModal} animationType="slide">
                     <View style={styles.explanationText}>
-                        <Text style={styles.title}>Welcome to ChatApp!</Text>
+                        <Text style={styles.title}>TRY YOUR LUCK</Text>
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
                         <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <TextInput
@@ -296,18 +310,28 @@ export default class Home extends Component {
                         />
                         <View style={styles.modalButton}>
                             <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.changeNameRequest() }/>
+                            <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChangeNameModal: false, displayName: this.state.storedName })} />
                         </View>
                     </View>
                 </Modal>
-                
+
+
+
+{/* Main APP windows with chats */}
                 <View style={styles.header}>
                     <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
-                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
+                    <Button styel={styles.addbutton} title="Change Name" onPress={() => this.setState({ showChangeNameModal: true, displayName: '' })}></Button>
                 </View>
-                </View>
-            )
-        }
-        
+                
+
+                {/* <ScrollView style={styles.scrollContainer}>
+                    
+                    {chatArray}
+
+                </ScrollView> */}
+
+            </View>
+            );  
     }
 }
 
