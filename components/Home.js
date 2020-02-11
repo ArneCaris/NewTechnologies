@@ -32,31 +32,6 @@ export default class Home extends Component {
   
 
     componentDidMount() {
-        // fetch("http://newtechproject.ddns.net:4000/chats")
-        //     .then((response) => response.json())
-        //     .then((responseJson) => {
-        //         this.setState({ chats: responseJson }, () => console.log("."))
-        //     })
-        //     .catch((error) => {
-        //     console.error(error);
-        //     });
-        // fetch("http://newtechproject.ddns.net:4000/messages")
-        //     .then((response) => response.json())
-        //     .then((responseJson) => {
-        //         this.setState({ messages: responseJson }, () => console.log(".."))
-        //     })
-        //     .catch((error) => {
-        //         console.error(error);
-        //     });
-        // fetch("http://newtechproject.ddns.net:4000/displaynames")
-        //     .then((response) => response.json())
-        //     .then((responseJson) => {
-        //         this.setState({ displayNames: responseJson }, () => console.log("..."))
-        //     })
-        //     .catch((error) => {
-        //         console.error(error);
-        //     });
-
         // const value = AsyncStorage.getItem('once');
 
         // if (value !== null) {
@@ -88,7 +63,7 @@ export default class Home extends Component {
                 if (ret !== null) {
                     this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
                 } else {
-                    this.setState({ showWelcomeModal: true }, () => console.log("showing the WELCOME modal."));
+                    this.setState({ showWelcomeModal: true }, () => console.log("showing the WELCOME modal."))
                 }
 
             }).catch(err => alert(err.toString()));
@@ -101,20 +76,6 @@ export default class Home extends Component {
         this.socket = io(this.ENDPOINT);
 
         
-
-        // this socket for auto login after user selected a name
-        // this.socket.on('loginRequestResponse', (res, err) => {
-            
-        //     if( res.length === 0 ) {
-        //         this.setState({showWelcomeModal: true}, () => console.log("If loginRequestResponse socket length === 0: "+ res.displayName))
-        //     } else {
-        //         this.setState({showChangeNameModal: false},() => console.log("else loginRequestResponse socket: "+ res.displayName));
-        //     }
-
-        // })
-
-
-        
         // this socket for name change
         this.socket.on("loginRequestResponse", res => {
 
@@ -122,7 +83,7 @@ export default class Home extends Component {
                 this.setState({showWelcomeModal: true});             
                
             } else {
-                this.setState({chats: res.name[0].chats, showWelcomeModal: false}, () => console.log("131 socket loginRequestResponse: " + res.name[0].chats))
+                this.setState({chats: res.name[0].chats, showWelcomeModal: false}, () => console.log("86 socket loginRequestResponse: " + res.name[0].chats))
             }
         });
 
@@ -140,7 +101,7 @@ export default class Home extends Component {
                 } else {
                     let setName = AsyncStorage.setItem('name', this.state.displayName );
                     if (setName !== null) {
-                        setName.then(ret => {this.setState({storedName: res.name, showWelcomeModal: false}) });
+                        setName.then(ret => {this.setState({storedName: res.name, chats: res.name[0].chats, showWelcomeModal: false}) });
                         console.log("socket submitNameRequestResponse: " + res)
                     } else {
                         console.log("something wrong with asyncstorage.")
@@ -151,7 +112,6 @@ export default class Home extends Component {
 
 
         this.socket.on('changeNameRequestResponse', (res) => {
-            console.log("changeNameRequestResponse", res);
             if (res.response === false) {
                 Alert.alert(
                     'Sorry, name not claimed.',
@@ -162,10 +122,15 @@ export default class Home extends Component {
                     {cancelable: false},
                     );
             } else {
-                async () => await AsyncStorage.setItem('name', res.name );
-                this.setState({storedName: res.name, showChangeNameModal: false});
-                console.log("socket changeNameRequestResponse: " + res)
-                console.log("socket changeNameRequestResponse storedName: " + this.state.storedName)
+                let setName = AsyncStorage.setItem('name', this.state.displayName );
+                if (setName !== null) {
+                    setName.then(this.setState({storedName: this.state.displayName, chats: res.name[0].chats, showChangeNameModal: false}));
+                    console.log("socket changeNameRequestResponse: " + res.name[0].chats)
+                    // console.log("socket changeNameRequestResponse: " + res.name[0].chats)
+
+                } else {
+                    console.log("something wrong with asyncstorage.")
+                }
             }
                 
         });
