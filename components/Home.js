@@ -88,7 +88,7 @@ export default class Home extends Component {
         });
 
         this.socket.on('submitNameRequestResponse', res => {
-            console.log("submitNameRequestResponse", "res.name: ", res);
+            console.log("91 submitNameRequestResponse", "res: ", res);
                 if (res.response === false) {
                     Alert.alert(
                         'Sorry, name not claimed.',
@@ -101,10 +101,9 @@ export default class Home extends Component {
                 } else {
                     let setName = AsyncStorage.setItem('name', this.state.displayName );
                     if (setName !== null) {
-                        setName.then(ret => {this.setState({storedName: res.name, chats: res.name[0].chats, showWelcomeModal: false}) });
-                        console.log("socket submitNameRequestResponse: " + res)
+                        setName.then(ret => {this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showWelcomeModal: false}) });
                     } else {
-                        console.log("something wrong with asyncstorage.")
+                        console.log("107 something wrong with asyncstorage.")
                     }
              
                 }
@@ -112,6 +111,7 @@ export default class Home extends Component {
 
 
         this.socket.on('changeNameRequestResponse', (res) => {
+            console.log("114 changeNameRequestResponse", "res: ", res)
             if (res.response === false) {
                 Alert.alert(
                     'Sorry, name not claimed.',
@@ -124,10 +124,7 @@ export default class Home extends Component {
             } else {
                 let setName = AsyncStorage.setItem('name', this.state.displayName );
                 if (setName !== null) {
-                    setName.then(this.setState({storedName: this.state.displayName, chats: res.name[0].chats, showChangeNameModal: false}));
-                    console.log("socket changeNameRequestResponse: " + res.name[0].chats)
-                    // console.log("socket changeNameRequestResponse: " + res.name[0].chats)
-
+                    setName.then(this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showChangeNameModal: false}));
                 } else {
                     console.log("something wrong with asyncstorage.")
                 }
