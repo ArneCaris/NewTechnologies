@@ -82,10 +82,14 @@ export default class Home extends Component {
         var name = AsyncStorage.getItem('name');
 
         if (name !== null) {
-            console.log("name from async storage is NOT NULL")
+            // console.log("name from async storage is NOT NULL")
             name.then((ret) => {
-                console.log(ret)
-                this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
+                console.log("AsyncStroge name: "+ ret)
+                if (ret !== null) {
+                    this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
+                } else {
+                    this.setState({ showWelcomeModal: true }, () => console.log("showing the WELCOME modal."));
+                }
 
             }).catch(err => alert(err.toString()));
         } else {
@@ -115,17 +119,7 @@ export default class Home extends Component {
         this.socket.on("loginRequestResponse", res => {
 
             if (res.response === false) {
-                this.setState({showWelcomeModal: true});
-                Alert.alert(
-                    'Sorry autologin failed',
-                    res.reason,
-                    [
-                        {text: 'Cancel', onPress: () => {console.log("login CANCEL Pressed")}, style: 'cancel'},
-                        {text: 'Retry', onPress: () => { this.submitNameRequest(); console.log('login Retry Pressed')}},
-                    ],
-                    {cancelable: true},
-                );
-                
+                this.setState({showWelcomeModal: true});             
                
             } else {
                 this.setState({chats: res.name[0].chats, showWelcomeModal: false}, () => console.log("131 socket loginRequestResponse: " + res.name[0].chats))
@@ -136,7 +130,7 @@ export default class Home extends Component {
             console.log("submitNameRequestResponse", "res.name: ", res);
                 if (res.response === false) {
                     Alert.alert(
-                        'Sorry autologin failed',
+                        'Sorry, name not claimed.',
                         res.reason,
                         [
                             {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
@@ -144,9 +138,14 @@ export default class Home extends Component {
                         {cancelable: false},
                       );
                 } else {
-                    async () => await AsyncStorage.setItem('name', this.state.displayName );
-                    this.setState({storedName: res.name, showWelcomeModal: false});
-                    console.log("socket submitNameRequestResponse: " + res)
+                    let setName = AsyncStorage.setItem('name', this.state.displayName );
+                    if (setName !== null) {
+                        setName.then(ret => {this.setState({storedName: res.name, showWelcomeModal: false}) });
+                        console.log("socket submitNameRequestResponse: " + res)
+                    } else {
+                        console.log("something wrong with asyncstorage.")
+                    }
+             
                 }
         })
 
@@ -155,7 +154,7 @@ export default class Home extends Component {
             console.log("changeNameRequestResponse", res);
             if (res.response === false) {
                 Alert.alert(
-                    'Sorry autologin failed',
+                    'Sorry, name not claimed.',
                     res.reason,
                     [
                         {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
@@ -187,14 +186,6 @@ export default class Home extends Component {
         });   
 
     }
-
-    // disconnectFromSocket () {
-    //     return () => {
-    //         socket.emit('disconnect');
-      
-    //         socket.off();
-    //       }
-    // }
 
 
     // displayNameRequest
@@ -270,7 +261,7 @@ export default class Home extends Component {
             return (
             <View style={styles.container}>
 
-{/* First Time login modal */}
+{/* WELCOME login modal */}
                 <Modal visible={this.state.showWelcomeModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
@@ -292,7 +283,7 @@ export default class Home extends Component {
                     </View>
                 </Modal>
 
-{/* When user wants to change name while logged in */}
+{/* CHANGE NAME while logged in modal */}
                 <Modal visible={this.state.showChangeNameModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>TRY YOUR LUCK</Text>
