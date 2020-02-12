@@ -83,7 +83,8 @@ export default class Home extends Component {
                 this.setState({showWelcomeModal: true});             
                
             } else {
-                this.setState({chats: res.name[0].chats, showWelcomeModal: false}, () => console.log("86 socket loginRequestResponse: " + res.name[0].chats))
+                this.setState({chats: res.name[0].chats, showWelcomeModal: false})
+                this.socket.emit('chatRequest', {chats: res.name[0].chats})
             }
         });
 
