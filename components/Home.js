@@ -160,7 +160,7 @@ export default class Home extends Component {
                 // console.log("chat array data = " + data.displayName, data.message);
                 return(
                     <View key={data} style={styles.chatBar}>
-                        <Text style={styles.name}>{data.displayName}</Text>
+                        <Text style={styles.name}>{data.chat}</Text>
                         <Text style={styles.message}>{data.message}</Text>
                     </View>
                 )
