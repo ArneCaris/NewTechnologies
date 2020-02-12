@@ -32,28 +32,7 @@ export default class Home extends Component {
   
 
     componentDidMount() {
-        // const value = AsyncStorage.getItem('once');
 
-        // if (value !== null) {
-        //     value.then((ret) => {
-        //     if (ret === null) {
-        //         // this is the first time
-        //         // show the modal
-        //         // save the value
-
-        //         AsyncStorage.setItem('once', 'bazinga');
-        //         this.setState({
-        //             showModal: true,
-        //         });
-        
-        //     } else {
-        //         // this is the second time
-        //         // skip the modal
-        
-        //     }
-        //     }).catch(err => alert(err.toString()));
-        // }
-        
         var name = AsyncStorage.getItem('name');
 
         if (name !== null) {
@@ -126,12 +105,24 @@ export default class Home extends Component {
                 let setName = AsyncStorage.setItem('name', this.state.displayName );
                 if (setName !== null) {
                     setName.then(this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showChangeNameModal: false}));
+                    this.socket.emit('chatRequest', {chats: res.name[0].chats})
+
                 } else {
                     console.log("something wrong with asyncstorage.")
                 }
             }
                 
         });
+
+        // recieve chats and latest messages
+        this.socket.on('chatRequestResponse', (res) => {
+            if(res.length != 0) {
+                this.setState({chatData: res.chats}, () => console.log("120 recieving chats from socket" + res.chats))
+            } else {
+                console.log("122 ERROR retrieving the chats!!!!")
+            }
+        })
+
     }
 
         
@@ -161,36 +152,22 @@ export default class Home extends Component {
     }
     
 
-    // addMore() {
-    //     if (this.state.displayNames.length !== 0) {
-    //         let newArray = this.state.displayNames;
-    //         let nameArray = [];
-    //         for (var i = 0; i < newArray.length; i++) {
-    //             nameArray.push(newArray[i].displayName)
-    //             var index = nameArray.indexOf(this.state.storedName)
-    //         }
-    //         global.chatArray = this.state.displayNames[index].chats.map((data) => {
-    //             fetch("http://newtechproject.ddns.net:4000/chats?chatName=" + data)
-    //                 .then((response) => response.json())
-    //                 .then((responseJson) => {
-    //                     global.messageArray = responseJson[0].latestMessage
-    //                     // console.log(global.messageArray)
-                        
-    //                 })
-    //                 .catch((error) => {
-    //                     console.error(error);
-    //                 });
-    //             console.log(global.messageArray)
-    //             return(
-    //                 <View key={data} style={styles.chatBar}>
-    //                     <Text style={styles.name}>{data}</Text>
-    //                     <Text style={styles.message}>{global.messageArray}</Text>
-    //                 </View>
-    //             )
-    //         })
-    //     }
+    addMore() {
+        global.chatArray= []
+
+        if (this.state.chatData.length !== 0) {
+            global.chatArray = this.state.chatData.map((data) => {
+                // console.log("chat array data = " + data.displayName, data.message);
+                return(
+                    <View key={data} style={styles.chatBar}>
+                        <Text style={styles.name}>{data.displayName}</Text>
+                        <Text style={styles.message}>{data.message}</Text>
+                    </View>
+                )
+            })
+        }
         
-    // }
+    }
 
     // addName() {
     //     if (this.state.displayName.length <= 2) {
@@ -219,7 +196,7 @@ export default class Home extends Component {
     render() {
 
             // console.log(this.state.chatData)
-            // this.addMore();
+            this.addMore();
             
             return (
             <View style={styles.container}>
@@ -278,11 +255,11 @@ export default class Home extends Component {
                 </View>
                 
 
-                {/* <ScrollView style={styles.scrollContainer}>
+                <ScrollView style={styles.scrollContainer}>
                     
                     {chatArray}
 
-                </ScrollView> */}
+                </ScrollView>
 
             </View>
             );  
