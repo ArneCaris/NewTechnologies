@@ -1,5 +1,5 @@
 import React, {Component, useEffect, useState} from 'react';
-import { Image, Modal, Button, TouchableOpacity } from 'react-native';
+import { Image, Modal, Button, TouchableOpacity, BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { StyleSheet, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
@@ -120,7 +120,7 @@ export default class Home extends Component {
         // recieve chats and latest messages
         this.socket.on('chatRequestResponse', (res) => {
             if(res.length != 0) {
-                this.setState({chatData: res.chats}, () => console.log("123 recieving chats from socket" + res.chats))
+                this.setState({chatData: res.chats}, () => console.log("123 recieving chats from socket " + res.chats))
             } else {
                 console.log("122 ERROR retrieving the chats!!!!")
             }
@@ -166,13 +166,12 @@ export default class Home extends Component {
 
     showChats() {
         global.chatArray= []
-        let index = -1;
         if (this.state.chatData.length !== 0) {
             global.chatArray = this.state.chatData.map((data, i) => {
                 // index++;
                 // console.log(index, i)
                 return(
-                    <TouchableOpacity key={data} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
+                    <TouchableOpacity key={data + i} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
                         this.socket.emit('getMessagesRequest', {chat : this.state.chat});
                     })}>
                         <Text style={styles.name} >{data.chat}</Text>
@@ -185,19 +184,31 @@ export default class Home extends Component {
         
     }
     showMessages() {
-        global.chatArray= []
-        let index = -1;
-        if (this.state.chatData.length !== 0) {
-            global.chatArray = this.state.chatData.map((data, i) => {
-                // index++;
-                // console.log(index, i)
+        global.messageArray= []
+        if (this.state.messages.length !== 0) {
+            global.messageArray = this.state.messages.map((data, i) => {
+                
+                let d = new Date(data.timeStamp)
+               
+                const date = d.getDate()
+                const month = d.getMonth() + 1
+                const year = d.getFullYear()
+                const hours = d.getHours()
+                const minutes = d.getMinutes()
+                let time = '';
+                console.log("d=="+ d)
+                if(d === NaN || d === null) {
+                    time = ''
+                } else {
+                    time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
+                }
+
                 return(
-                    <TouchableOpacity key={data} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
-                        this.socket.emit('getMessagesRequest', {chat : this.state.chat});
-                    })}>
-                        <Text style={styles.name} >{data.chat}</Text>
+                    <View key={data.message} style={styles.chatBar} >
+                        <Text style={styles.name} >{data.displayName}</Text>
                         <Text style={styles.message}>{data.message}</Text>
-                    </TouchableOpacity>
+                        {/* <Text>{time}</Text> */}
+                    </View>
                 )
 
             })
@@ -205,9 +216,12 @@ export default class Home extends Component {
         
     }
 
+
+
     render() {
 
             this.showChats();
+            this.showMessages();
             
             return (
             <View style={styles.container}>
@@ -235,7 +249,7 @@ export default class Home extends Component {
                 </Modal>
 
 {/* CHANGE NAME while logged in modal */}
-                <Modal visible={this.state.showChangeNameModal} animationType="slide">
+                <Modal visible={this.state.showChangeNameModal} animationType="slide" onRequestClose={() => this.setState({ showChangeNameModal: false })}>
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>TRY YOUR LUCK</Text>
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
@@ -259,17 +273,24 @@ export default class Home extends Component {
 
 
 {/* OPEN CHAT modal */}
-<Modal visible={this.state.showChatModal} animationType="slide">
+<Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
                     <View style={styles.explanationText}>
 
                         {/* <Text style={styles.title}>Chat Modal</Text> */}
 
-                        <Text style={styles.title}>{this.state.messages[0].message}</Text>
+                        {/* <Text style={styles.title}>{this.state.messages[0].message}</Text> */}
 
-                        {/* <Text style={styles.title}>{this.state.chat}</Text> */}
-                        <View>
+                        <Text style={styles.title}>{this.state.chat}</Text>
+
+                     
+                    </View>
+
+                    <ScrollView style={styles.scrollContainer}>
+                        {messageArray}
+                    </ScrollView>
+
+                    <View>
                         <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
-                        </View>
                     </View>
                 </Modal>
 
@@ -345,7 +366,7 @@ const styles = StyleSheet.create({
         top: 22,
     },
     title: {
-        marginTop: -300,
+        marginTop: -250,
         fontSize: 30,
         color: "#a11485",
         fontWeight: 'bold',
