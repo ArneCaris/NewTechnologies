@@ -1,5 +1,5 @@
 import React, {Component, useEffect, useState} from 'react';
-import { Image, Modal, Button } from 'react-native';
+import { Image, Modal, Button, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { StyleSheet, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
@@ -10,12 +10,14 @@ export default class Home extends Component {
         super();
         this.state = {
             chats: [],
-            messages: [],
+            messages: [{message: "no messages..."}],
             chatData: [],
             showWelcomeModal: false,
             showChangeNameModal: false,
+            showChatModal: false,
             displayName: "",
-            storedName: ""
+            storedName: "",
+            chat: ""
         }
         // this.addName = this.addName.bind(this);
         // this.addMore = this.addMore.bind(this);
@@ -82,6 +84,7 @@ export default class Home extends Component {
                     let setName = AsyncStorage.setItem('name', this.state.displayName );
                     if (setName !== null) {
                         setName.then(ret => {this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showWelcomeModal: false}) });
+                        this.socket.emit('chatRequest', {chats: res.name[0].chats})
                     } else {
                         console.log("107 something wrong with asyncstorage.")
                     }
@@ -117,9 +120,18 @@ export default class Home extends Component {
         // recieve chats and latest messages
         this.socket.on('chatRequestResponse', (res) => {
             if(res.length != 0) {
-                this.setState({chatData: res.chats}, () => console.log("120 recieving chats from socket" + res.chats))
+                this.setState({chatData: res.chats}, () => console.log("123 recieving chats from socket" + res.chats))
             } else {
                 console.log("122 ERROR retrieving the chats!!!!")
+            }
+        })
+
+        this.socket.on('getMessagesRequestResponse', (res) => {
+            if(res.length != 0) {
+                this.setState({messages: res.response}, () => console.log(this.state.messages))
+                console.log("this is messages state: " + this.state.messages[0].message)
+            } else {
+                console.log('133 no messages')
             }
         })
 
@@ -152,51 +164,50 @@ export default class Home extends Component {
     }
     
 
-    addMore() {
+    showChats() {
         global.chatArray= []
-
+        let index = -1;
         if (this.state.chatData.length !== 0) {
-            global.chatArray = this.state.chatData.map((data) => {
-                // console.log("chat array data = " + data.displayName, data.message);
+            global.chatArray = this.state.chatData.map((data, i) => {
+                // index++;
+                // console.log(index, i)
                 return(
-                    <View key={data} style={styles.chatBar}>
-                        <Text style={styles.name}>{data.chat}</Text>
+                    <TouchableOpacity key={data} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
+                        this.socket.emit('getMessagesRequest', {chat : this.state.chat});
+                    })}>
+                        <Text style={styles.name} >{data.chat}</Text>
                         <Text style={styles.message}>{data.message}</Text>
-                    </View>
+                    </TouchableOpacity>
                 )
+
+            })
+        }
+        
+    }
+    showMessages() {
+        global.chatArray= []
+        let index = -1;
+        if (this.state.chatData.length !== 0) {
+            global.chatArray = this.state.chatData.map((data, i) => {
+                // index++;
+                // console.log(index, i)
+                return(
+                    <TouchableOpacity key={data} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
+                        this.socket.emit('getMessagesRequest', {chat : this.state.chat});
+                    })}>
+                        <Text style={styles.name} >{data.chat}</Text>
+                        <Text style={styles.message}>{data.message}</Text>
+                    </TouchableOpacity>
+                )
+
             })
         }
         
     }
 
-    // addName() {
-    //     if (this.state.displayName.length <= 2) {
-    //         Alert.alert('Oops too short!',"Your display name needs to have at least 3 characters.")
-    //     } else {
-    //         fetch("http://newtechproject.ddns.net:4000/displaynames", {
-    //             method: 'POST',
-    //             headers: {
-    //                 Accept: 'application/json',
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ displayName: this.state.displayName })
-    //         }).then(function(response) {
-    //             return response;
-    //         }).catch(function(error) {
-    //             console.log("error " + error.message);
-    //             throw error;
-    //         })
-    //         this.setState({ showModal: false  }); 
-    //         AsyncStorage.setItem('name', this.state.displayName)  
-    //         this.componentDidMount();
-    //     }
-        
-    // }
-
     render() {
 
-            // console.log(this.state.chatData)
-            this.addMore();
+            this.showChats();
             
             return (
             <View style={styles.container}>
@@ -246,6 +257,21 @@ export default class Home extends Component {
                     </View>
                 </Modal>
 
+
+{/* OPEN CHAT modal */}
+<Modal visible={this.state.showChatModal} animationType="slide">
+                    <View style={styles.explanationText}>
+
+                        {/* <Text style={styles.title}>Chat Modal</Text> */}
+
+                        <Text style={styles.title}>{this.state.messages[0].message}</Text>
+
+                        {/* <Text style={styles.title}>{this.state.chat}</Text> */}
+                        <View>
+                        <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
+                        </View>
+                    </View>
+                </Modal>
 
 
 {/* Main APP windows with chats */}
