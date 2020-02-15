@@ -1,7 +1,10 @@
-import React, {Component} from 'react';
-import { Image, Modal, Button } from 'react-native';
+import React, {Component, useEffect, useState} from 'react';
+import { Image, Modal, Button, TouchableOpacity, BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
-import {Platform, StyleSheet, Text, View, TextInput, Alert, ScrollView} from 'react-native';
+import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
+import io from 'socket.io-client';
+import styles from './styleHome';
+
 
 export default class Home extends Component {
 
@@ -9,156 +12,233 @@ export default class Home extends Component {
         super();
         this.state = {
             chats: [],
-            messages: [],
-            displayNames: [],
+            messages: [{message: "no messages..."}],
             chatData: [],
-            showModal: false,
+            showWelcomeModal: false,
+            showChangeNameModal: false,
+            showChatModal: false,
             displayName: "",
-            storedName: ""
+            storedName: "",
+            chat: "",
         }
-        this.addName = this.addName.bind(this);
-        this.addMore = this.addMore.bind(this);
+
+        this.submitNameRequest = this.submitNameRequest.bind(this);
+        this.changeNameRequest = this.changeNameRequest.bind(this);
+        this.sendMessage = this.sendMessage.bind(this);
+
+        this.ENDPOINT = 'http://newtechproject.ddns.net:5000/';
+
+        this.socket = ''
     }
 
+
+  
+
     componentDidMount() {
-        fetch("http://newtechproject.ddns.net:4000/chats")
-            .then((response) => response.json())
-            .then((responseJson) => {
-                this.setState({ chats: responseJson }, () => console.log("."))
-            })
-            .catch((error) => {
-            console.error(error);
-            });
-        fetch("http://newtechproject.ddns.net:4000/messages")
-            .then((response) => response.json())
-            .then((responseJson) => {
-                this.setState({ messages: responseJson }, () => console.log(".."))
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-        fetch("http://newtechproject.ddns.net:4000/displaynames")
-            .then((response) => response.json())
-            .then((responseJson) => {
-                this.setState({ displayNames: responseJson }, () => console.log("..."))
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-
-        const value = AsyncStorage.getItem('once');
-
-        if (value !== null) {
-            value.then((ret) => {
-            if (ret === null) {
-                // this is the first time
-                // show the modal
-                // save the value
-
-                AsyncStorage.setItem('once', 'bazinga');
-                this.setState({
-                    showModal: true,
-                });
         
-            } else {
-                // this is the second time
-                // skip the modal
-        
-            }
-            }).catch(err => alert(err.toString()));
-        }
-        
+        YellowBox.ignoreWarnings([
+            'Unrecognized WebSocket connection option(s) `agent`, `perMessageDeflate`, `pfx`, `key`, `passphrase`, `cert`, `ca`, `ciphers`, `rejectUnauthorized`. Did you mean to put these under `headers`?'
+        ]);
+
         var name = AsyncStorage.getItem('name');
 
         if (name !== null) {
+            // console.log("name from async storage is NOT NULL")
             name.then((ret) => {
-            if (ret === null) {
-                // this is the first time
-                // save the name
+                console.log("AsyncStroge name: "+ ret)
+                if (ret !== null) {
+                    this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
+                } else {
+                    this.setState({ showWelcomeModal: true }, () => console.log("showing the WELCOME modal."))
+                }
 
-                AsyncStorage.setItem('name', this.state.displayName);
-        
-            } else {
-                // this is the second time
-                // skip the modal
-                name = AsyncStorage.getItem('name');
-                name.then((e) => {
-                    this.setState({ storedName: e })
-                })
-            }
             }).catch(err => alert(err.toString()));
-        }
-
-        
-    }
-
-    addMore() {
-        if (this.state.displayNames.length !== 0) {
-            let newArray = this.state.displayNames;
-            let nameArray = [];
-            for (var i = 0; i < newArray.length; i++) {
-                nameArray.push(newArray[i].displayName)
-                var index = nameArray.indexOf(this.state.storedName)
-            }
-            global.chatArray = this.state.displayNames[index].chats.map((data) => {
-                fetch("http://newtechproject.ddns.net:4000/chats?chatName=" + data)
-                    .then((response) => response.json())
-                    .then((responseJson) => {
-                        global.messageArray = responseJson[0].latestMessage
-                        // console.log(global.messageArray)
-                        
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                    });
-                console.log(global.messageArray)
-                return(
-                    <View key={data} style={styles.chatBar}>
-                        <Text style={styles.name}>{data}</Text>
-                        <Text style={styles.message}>{global.messageArray}</Text>
-                    </View>
-                )
-            })
-        }
-        
-    }
-
-    addName() {
-        if (this.state.displayName.length <= 2) {
-            Alert.alert('Oops too short!',"Your display name needs to have at least 3 characters.")
         } else {
-            fetch("http://newtechproject.ddns.net:4000/displaynames", {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ displayName: this.state.displayName })
-            }).then(function(response) {
-                return response;
-            }).catch(function(error) {
-                console.log("error " + error.message);
-                throw error;
+            console.log("name from async strage is NILL");
+        }
+
+
+        // socket stuff starts here
+        this.socket = io(this.ENDPOINT);
+
+        
+        // this socket for name change
+        this.socket.on("loginRequestResponse", res => {
+
+            if (res.response === false) {
+                this.setState({showWelcomeModal: true});             
+               
+            } else {
+                this.setState({chats: res.name[0].chats, showWelcomeModal: false})
+                this.socket.emit('chatRequest', {displayName: this.state.storedName, chats: res.name[0].chats})
+            }
+        });
+
+        this.socket.on('submitNameRequestResponse', res => {
+            console.log("91 submitNameRequestResponse", "res: ", res);
+                if (res.response === false) {
+                    Alert.alert(
+                        'Sorry, name not claimed.',
+                        res.reason,
+                        [
+                            {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
+                        ],
+                        {cancelable: false},
+                      );
+                } else {
+                    let setName = AsyncStorage.setItem('name', this.state.displayName );
+                    if (setName !== null) {
+                        setName.then(ret => {this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showWelcomeModal: false}) });
+                        this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
+                    } else {
+                        console.log("107 something wrong with asyncstorage.")
+                    }
+             
+                }
+        })
+
+
+        this.socket.on('changeNameRequestResponse', (res) => {
+            console.log("102 changeNameRequestResponse", "res: ", res)
+            if (res.response === false) {
+                Alert.alert(
+                    'Sorry, name not claimed.',
+                    res.reason,
+                    [
+                        {text: 'OK', onPress: () => {console.log('Retry OK Pressed')}},
+                    ],
+                    {cancelable: false},
+                    );
+            } else {
+                let setName = AsyncStorage.setItem('name', this.state.displayName );
+                if (setName !== null) {
+                    setName.then(this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showChangeNameModal: false}));
+                    this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
+
+                } else {
+                    console.log("something wrong with asyncstorage.")
+                }
+            }
+                
+        });
+
+        // recieve chats and latest messages
+        this.socket.on('chatRequestResponse', (res) => {
+            console.log("chatRequestResponse triggered")
+            if(res.chats.length != 0) {
+
+                this.setState({chatData: res.chats}) //console.log("131 map from socket: " + this.state.chatData[i][0].chat)
+
+            } else {
+                console.log("133 ERROR retrieving the chats!!!!")
+            }
+        })
+
+
+
+
+        // // messages management starts here
+        // this.socket.on('getMessagesRequestResponse', (res) => {
+        //     if(res.length != 0) {
+        //         this.setState({messages: res.response}, () => console.log(this.state.messages))
+        //         console.log("this is messages state: " + this.state.messages[0].message)
+        //     } else {
+        //         console.log('133 no messages')
+        //     }
+        // })
+
+        // this.socket.on('messageBroadcast', (res) => {
+
+        // })
+
+    }
+
+    // displayNameRequest
+    submitNameRequest() {
+        this.socket.emit('submitNameRequest', { displayName : this.state.displayName})
+    }
+
+    changeNameRequest() {
+        this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
+    }
+
+    sendMessage() {
+        this.socket.emit('sendMessage', {displayName: this.state.storedName, chat: this.state.chat, message: this.state.message, chats: this.state.chats})
+        this.setState({message: ''})
+
+    }
+    
+
+    showChats() {
+        global.chatArray= []
+        if (this.state.chatData.length !== 0) {
+            global.chatArray = this.state.chatData.map((latestMessage, i) => {
+
+                return(
+                    <TouchableOpacity key={latestMessage[0].chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage[latestMessage.length - 1].chat, showChatModal : true})}>
+                        <Text style={styles.name} >{latestMessage[latestMessage.length - 1].chat}</Text>
+                        <Text style={styles.message}>{latestMessage[latestMessage.length - 1].message}</Text>
+                    </TouchableOpacity>
+                )
+
             })
-            this.setState({ showModal: false  }); 
-            AsyncStorage.setItem('name', this.state.displayName)  
-            this.componentDidMount();
         }
         
     }
+    showMessages() {
+        global.messageArray= []
+        if (this.state.chatData.length !== 0) {
+            global.messageArray = this.state.chatData.map((data, i) => {
+                return data.map(chat => {
+                    // console.log("logging data",chat.chat, this.state.chat, chat.chat === this.state.chat)
+
+                    // let d = new Date(chat.timeStamp)
+                
+                    // const date = d.getDate()
+                    // const month = d.getMonth() + 1
+                    // const year = d.getFullYear()
+                    // const hours = d.getHours()
+                    // const minutes = d.getMinutes()
+                    // let time = '';
+                    // // console.log("d=="+ d)
+                    // if(d === NaN || d === null) {
+                    //     time = ''
+                    // } else {
+                    //     time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
+                    // }
+                
+                    if (chat.chat === this.state.chat) {
+                        return(
+                            <View key={chat.message + i} style={styles.chatBar} >
+                                <Text style={styles.name} >{chat.displayName}</Text>
+                                <Text style={styles.message}>{chat.message}</Text>
+                                {/* <Text>{time}</Text> */}
+                            </View>
+                        )
+    
+                    }
+                        
+                })
+                
+            })
+                
+        }
+        
+    }
+
+
 
     render() {
 
-
-        if (this.state.chats.length !== 0 && this.state.messages.length !== 0 && this.state.displayNames.length !== 0) {
-
-            // console.log(this.state.chatData)
-            this.addMore();
+            this.showChats();
+            this.showMessages();
+                       
             
             return (
             <View style={styles.container}>
 
-                <Modal visible={this.state.showModal} animationType="slide">
+{/* WELCOME login modal */}
+                <Modal visible={this.state.showWelcomeModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
@@ -168,19 +248,86 @@ export default class Home extends Component {
                             placeholder="username                                             "
                             maxLength={15}
                             ref="displayName"
-                            onChangeText={(displayName) => this.setState({ displayName: displayName }, () => console.log(this.state.displayName))}
+                            value={this.state.displayName}
+                            onSubmitEditing={() => this.submitNameRequest()}
+                            onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
                             vale={this.state.displayName}
                         />
                         <View style={styles.modalButton}>
-                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => { this.setState({ showModal: true }); this.addName(); }}/>
+                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.submitNameRequest() }/>
                         </View>
                     </View>
                 </Modal>
-                
+
+{/* CHANGE NAME while logged in modal */}
+                <Modal visible={this.state.showChangeNameModal} animationType="slide" onRequestClose={() => this.setState({ showChangeNameModal: false })}>
+                    <View style={styles.explanationText}>
+                        <Text style={styles.title}>TRY YOUR LUCK</Text>
+                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
+                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
+                        <TextInput
+                            style={styles.TextInput}
+                            placeholder="username                                             "
+                            maxLength={15}
+                            ref="displayName"
+                            value={this.state.displayName}
+                            onSubmitEditing={() => this.changeNameRequest()}
+                            onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
+                            value={this.state.displayName}
+                        />
+                        <View style={styles.modalButton}>
+                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.changeNameRequest() }/>
+                            <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChangeNameModal: false, displayName: this.state.storedName })} />
+                        </View>
+                    </View>
+                </Modal>
+
+
+{/* OPEN CHAT modal */}
+                <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
+                    <View style={styles.explanationText}>
+                    <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
+
+                        {/* <Text style={styles.title}>Chat Modal</Text> */}
+
+                        {/* <Text style={styles.title}>{this.state.messages[0].message}</Text> */}
+
+                        <Text style={styles.title}>{this.state.chat}</Text>
+
+                     
+                    </View>
+
+                    <ScrollView 
+                        style={styles.scrollContainer}
+                        ref={ref => this.scrollView = ref}
+                        onContentSizeChange={(contentWidth, contentHeight)=>{        
+                            this.scrollView.scrollToEnd({animated: true});
+                        }}
+                    >
+                        {messageArray}
+                    </ScrollView>
+
+                    <View>
+                        <TextInput 
+                            placeholder="type here...."
+                            ref="displayName"
+                            value={this.state.message}
+                            onSubmitEditing={() => this.sendMessage()}
+                            onChangeText={(message) => this.setState({ message }, () => console.log(this.state.message))}
+                            vale={this.state.message}
+                        ></TextInput>
+                        <Button styel={styles.addbutton} title=">" onPress={() => {console.log("OPEN MADAL: send message pressed"); this.setState({message: ''})} }></Button>
+
+                    </View>
+                </Modal>
+
+
+{/* Main APP windows with chats */}
                 <View style={styles.header}>
                     <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
-                    <Button styel={styles.addbutton} title="Modal" onPress={() => this.setState({ showModal: true })}></Button>
+                    <Button style={styles.addbutton} title="Change Name" onPress={() => this.setState({ showChangeNameModal: true, displayName: '' })}></Button>
                 </View>
+                
 
                 <ScrollView style={styles.scrollContainer}>
                     
@@ -189,97 +336,6 @@ export default class Home extends Component {
                 </ScrollView>
 
             </View>
-            );
-        } else {
-            return(
-                <Text>Loading ..</Text>
-            )
-        }
-        
+            );  
     }
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        backgroundColor: '#a11485',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-    },
-    explanationText: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft: 10,
-        marginRight: 10, 
-    },
-    headerText: {
-        color: 'white',
-        fontSize: 22,
-        padding: 26,
-        fontWeight: 'bold',
-        alignItems: 'center',
-    },
-    scrollContainer: {
-        flex: 1,
-        marginBottom: 10,
-    },
-    modalButton: {
-        position: 'absolute',
-        margin: 16,
-        right: 10,
-        bottom: 10,
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 500,
-    },
-    chatBar: {
-        height: 85,
-        borderRadius: 4,
-        borderWidth: 0.5,
-        borderColor: '#d6d7da',
-    },
-    name: {
-        left: 75,
-        top: 14,
-        fontWeight: 'bold',
-    },
-    message: {
-        left: 75,
-        top: 22,
-    },
-    title: {
-        marginTop: -300,
-        fontSize: 30,
-        color: "#a11485",
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    text: {
-        top: 100,
-        fontSize: 15,
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    noteMsg: {
-        top: 100,
-        fontSize: 20,
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    TextInput: {
-        top: 180,
-        marginBottom: 50,
-        borderRadius: 2,
-        borderWidth: 1.1,
-        borderColor: '#a11485',
-        marginTop: 50,
-    }
-
-    
-});
