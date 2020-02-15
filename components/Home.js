@@ -1,8 +1,10 @@
 import React, {Component, useEffect, useState} from 'react';
 import { Image, Modal, Button, TouchableOpacity, BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
-import { StyleSheet, Text, View, TextInput, Alert, ScrollView} from 'react-native';
+import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
+import styles from './styleHome';
+
 
 export default class Home extends Component {
 
@@ -17,13 +19,12 @@ export default class Home extends Component {
             showChatModal: false,
             displayName: "",
             storedName: "",
-            chat: ""
+            chat: "",
         }
-        // this.addName = this.addName.bind(this);
-        // this.addMore = this.addMore.bind(this);
-        this.connectToSocket = this.connectToSocket.bind(this);
+
         this.submitNameRequest = this.submitNameRequest.bind(this);
         this.changeNameRequest = this.changeNameRequest.bind(this);
+        this.sendMessage = this.sendMessage.bind(this);
 
         this.ENDPOINT = 'http://newtechproject.ddns.net:5000/';
 
@@ -34,6 +35,10 @@ export default class Home extends Component {
   
 
     componentDidMount() {
+        
+        YellowBox.ignoreWarnings([
+            'Unrecognized WebSocket connection option(s) `agent`, `perMessageDeflate`, `pfx`, `key`, `passphrase`, `cert`, `ca`, `ciphers`, `rejectUnauthorized`. Did you mean to put these under `headers`?'
+        ]);
 
         var name = AsyncStorage.getItem('name');
 
@@ -65,7 +70,7 @@ export default class Home extends Component {
                
             } else {
                 this.setState({chats: res.name[0].chats, showWelcomeModal: false})
-                this.socket.emit('chatRequest', {chats: res.name[0].chats})
+                this.socket.emit('chatRequest', {displayName: this.state.storedName, chats: res.name[0].chats})
             }
         });
 
@@ -84,7 +89,7 @@ export default class Home extends Component {
                     let setName = AsyncStorage.setItem('name', this.state.displayName );
                     if (setName !== null) {
                         setName.then(ret => {this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showWelcomeModal: false}) });
-                        this.socket.emit('chatRequest', {chats: res.name[0].chats})
+                        this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
                     } else {
                         console.log("107 something wrong with asyncstorage.")
                     }
@@ -94,7 +99,7 @@ export default class Home extends Component {
 
 
         this.socket.on('changeNameRequestResponse', (res) => {
-            console.log("114 changeNameRequestResponse", "res: ", res)
+            console.log("102 changeNameRequestResponse", "res: ", res)
             if (res.response === false) {
                 Alert.alert(
                     'Sorry, name not claimed.',
@@ -108,7 +113,7 @@ export default class Home extends Component {
                 let setName = AsyncStorage.setItem('name', this.state.displayName );
                 if (setName !== null) {
                     setName.then(this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showChangeNameModal: false}));
-                    this.socket.emit('chatRequest', {chats: res.name[0].chats})
+                    this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
 
                 } else {
                     console.log("something wrong with asyncstorage.")
@@ -119,40 +124,34 @@ export default class Home extends Component {
 
         // recieve chats and latest messages
         this.socket.on('chatRequestResponse', (res) => {
-            if(res.length != 0) {
-                this.setState({chatData: res.chats}, () => console.log("123 recieving chats from socket " + res.chats))
+            console.log("chatRequestResponse triggered")
+            if(res.chats.length != 0) {
+
+                this.setState({chatData: res.chats}) //console.log("131 map from socket: " + this.state.chatData[i][0].chat)
+
             } else {
-                console.log("122 ERROR retrieving the chats!!!!")
+                console.log("133 ERROR retrieving the chats!!!!")
             }
         })
 
-        this.socket.on('getMessagesRequestResponse', (res) => {
-            if(res.length != 0) {
-                this.setState({messages: res.response}, () => console.log(this.state.messages))
-                console.log("this is messages state: " + this.state.messages[0].message)
-            } else {
-                console.log('133 no messages')
-            }
-        })
+
+
+
+        // // messages management starts here
+        // this.socket.on('getMessagesRequestResponse', (res) => {
+        //     if(res.length != 0) {
+        //         this.setState({messages: res.response}, () => console.log(this.state.messages))
+        //         console.log("this is messages state: " + this.state.messages[0].message)
+        //     } else {
+        //         console.log('133 no messages')
+        //     }
+        // })
+
+        // this.socket.on('messageBroadcast', (res) => {
+
+        // })
 
     }
-
-        
-    //Join user to the chat he wants to join
-    connectToSocket() {
-
-    
-        // this.socket.emit('join', () => {
-    
-        // });
-
-        //Recieve messages as soon as user send it
-        this.socket.on('message', (message) => {
-            this.setState([...messages, message])
-        });   
-
-    }
-
 
     // displayNameRequest
     submitNameRequest() {
@@ -162,20 +161,23 @@ export default class Home extends Component {
     changeNameRequest() {
         this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
     }
+
+    sendMessage() {
+        this.socket.emit('sendMessage', {displayName: this.state.storedName, chat: this.state.chat, message: this.state.message, chats: this.state.chats})
+        this.setState({message: ''})
+
+    }
     
 
     showChats() {
         global.chatArray= []
         if (this.state.chatData.length !== 0) {
-            global.chatArray = this.state.chatData.map((data, i) => {
-                // index++;
-                // console.log(index, i)
+            global.chatArray = this.state.chatData.map((latestMessage, i) => {
+
                 return(
-                    <TouchableOpacity key={data + i} style={styles.chatBar} onPress={() => this.setState({showChatModal : true, chat: this.state.chatData[i].chat}, () => {
-                        this.socket.emit('getMessagesRequest', {chat : this.state.chat});
-                    })}>
-                        <Text style={styles.name} >{data.chat}</Text>
-                        <Text style={styles.message}>{data.message}</Text>
+                    <TouchableOpacity key={latestMessage[0].chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage[latestMessage.length - 1].chat, showChatModal : true})}>
+                        <Text style={styles.name} >{latestMessage[latestMessage.length - 1].chat}</Text>
+                        <Text style={styles.message}>{latestMessage[latestMessage.length - 1].message}</Text>
                     </TouchableOpacity>
                 )
 
@@ -185,33 +187,41 @@ export default class Home extends Component {
     }
     showMessages() {
         global.messageArray= []
-        if (this.state.messages.length !== 0) {
-            global.messageArray = this.state.messages.map((data, i) => {
+        if (this.state.chatData.length !== 0) {
+            global.messageArray = this.state.chatData.map((data, i) => {
+                return data.map(chat => {
+                    // console.log("logging data",chat.chat, this.state.chat, chat.chat === this.state.chat)
+
+                    // let d = new Date(chat.timeStamp)
                 
-                let d = new Date(data.timeStamp)
-               
-                const date = d.getDate()
-                const month = d.getMonth() + 1
-                const year = d.getFullYear()
-                const hours = d.getHours()
-                const minutes = d.getMinutes()
-                let time = '';
-                console.log("d=="+ d)
-                if(d === NaN || d === null) {
-                    time = ''
-                } else {
-                    time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
-                }
-
-                return(
-                    <View key={data.message} style={styles.chatBar} >
-                        <Text style={styles.name} >{data.displayName}</Text>
-                        <Text style={styles.message}>{data.message}</Text>
-                        {/* <Text>{time}</Text> */}
-                    </View>
-                )
-
+                    // const date = d.getDate()
+                    // const month = d.getMonth() + 1
+                    // const year = d.getFullYear()
+                    // const hours = d.getHours()
+                    // const minutes = d.getMinutes()
+                    // let time = '';
+                    // // console.log("d=="+ d)
+                    // if(d === NaN || d === null) {
+                    //     time = ''
+                    // } else {
+                    //     time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
+                    // }
+                
+                    if (chat.chat === this.state.chat) {
+                        return(
+                            <View key={chat.message + i} style={styles.chatBar} >
+                                <Text style={styles.name} >{chat.displayName}</Text>
+                                <Text style={styles.message}>{chat.message}</Text>
+                                {/* <Text>{time}</Text> */}
+                            </View>
+                        )
+    
+                    }
+                        
+                })
+                
             })
+                
         }
         
     }
@@ -222,6 +232,7 @@ export default class Home extends Component {
 
             this.showChats();
             this.showMessages();
+                       
             
             return (
             <View style={styles.container}>
@@ -262,7 +273,7 @@ export default class Home extends Component {
                             value={this.state.displayName}
                             onSubmitEditing={() => this.changeNameRequest()}
                             onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
-                            vale={this.state.displayName}
+                            value={this.state.displayName}
                         />
                         <View style={styles.modalButton}>
                             <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.changeNameRequest() }/>
@@ -273,8 +284,9 @@ export default class Home extends Component {
 
 
 {/* OPEN CHAT modal */}
-<Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
+                <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
                     <View style={styles.explanationText}>
+                    <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
 
                         {/* <Text style={styles.title}>Chat Modal</Text> */}
 
@@ -285,12 +297,27 @@ export default class Home extends Component {
                      
                     </View>
 
-                    <ScrollView style={styles.scrollContainer}>
+                    <ScrollView 
+                        style={styles.scrollContainer}
+                        ref={ref => this.scrollView = ref}
+                        onContentSizeChange={(contentWidth, contentHeight)=>{        
+                            this.scrollView.scrollToEnd({animated: true});
+                        }}
+                    >
                         {messageArray}
                     </ScrollView>
 
                     <View>
-                        <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
+                        <TextInput 
+                            placeholder="type here...."
+                            ref="displayName"
+                            value={this.state.message}
+                            onSubmitEditing={() => this.sendMessage()}
+                            onChangeText={(message) => this.setState({ message }, () => console.log(this.state.message))}
+                            vale={this.state.message}
+                        ></TextInput>
+                        <Button styel={styles.addbutton} title=">" onPress={() => {console.log("OPEN MADAL: send message pressed"); this.setState({message: ''})} }></Button>
+
                     </View>
                 </Modal>
 
@@ -298,7 +325,7 @@ export default class Home extends Component {
 {/* Main APP windows with chats */}
                 <View style={styles.header}>
                     <Text style={styles.headerText}> ChatApp - {this.state.storedName} </Text>
-                    <Button styel={styles.addbutton} title="Change Name" onPress={() => this.setState({ showChangeNameModal: true, displayName: '' })}></Button>
+                    <Button style={styles.addbutton} title="Change Name" onPress={() => this.setState({ showChangeNameModal: true, displayName: '' })}></Button>
                 </View>
                 
 
@@ -312,88 +339,3 @@ export default class Home extends Component {
             );  
     }
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        backgroundColor: '#a11485',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-    },
-    explanationText: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft: 10,
-        marginRight: 10, 
-    },
-    headerText: {
-        color: 'white',
-        fontSize: 22,
-        padding: 26,
-        fontWeight: 'bold',
-        alignItems: 'center',
-    },
-    scrollContainer: {
-        flex: 1,
-        marginBottom: 10,
-    },
-    modalButton: {
-        position: 'absolute',
-        margin: 16,
-        right: 10,
-        bottom: 10,
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 500,
-    },
-    chatBar: {
-        height: 85,
-        borderRadius: 4,
-        borderWidth: 0.5,
-        borderColor: '#d6d7da',
-    },
-    name: {
-        left: 75,
-        top: 14,
-        fontWeight: 'bold',
-    },
-    message: {
-        left: 75,
-        top: 22,
-    },
-    title: {
-        marginTop: -250,
-        fontSize: 30,
-        color: "#a11485",
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    text: {
-        top: 100,
-        fontSize: 15,
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    noteMsg: {
-        top: 100,
-        fontSize: 20,
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
-    TextInput: {
-        top: 180,
-        marginBottom: 50,
-        borderRadius: 2,
-        borderWidth: 1.1,
-        borderColor: '#a11485',
-        marginTop: 50,
-    }
-
-    
-});
