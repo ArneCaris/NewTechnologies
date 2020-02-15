@@ -43,7 +43,6 @@ export default class Home extends Component {
         var name = AsyncStorage.getItem('name');
 
         if (name !== null) {
-            // console.log("name from async storage is NOT NULL")
             name.then((ret) => {
                 console.log("AsyncStroge name: "+ ret)
                 if (ret !== null) {
@@ -54,7 +53,7 @@ export default class Home extends Component {
 
             }).catch(err => alert(err.toString()));
         } else {
-            console.log("name from async strage is NILL");
+            console.log("name from async strage is NULL");
         }
 
 
@@ -134,23 +133,6 @@ export default class Home extends Component {
             }
         })
 
-
-
-
-        // // messages management starts here
-        // this.socket.on('getMessagesRequestResponse', (res) => {
-        //     if(res.length != 0) {
-        //         this.setState({messages: res.response}, () => console.log(this.state.messages))
-        //         console.log("this is messages state: " + this.state.messages[0].message)
-        //     } else {
-        //         console.log('133 no messages')
-        //     }
-        // })
-
-        // this.socket.on('messageBroadcast', (res) => {
-
-        // })
-
     }
 
     // displayNameRequest
@@ -162,13 +144,14 @@ export default class Home extends Component {
         this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
     }
 
+    // messaging
     sendMessage() {
         this.socket.emit('sendMessage', {displayName: this.state.storedName, chat: this.state.chat, message: this.state.message, chats: this.state.chats})
         this.setState({message: ''})
 
     }
     
-
+    // rendering UI
     showChats() {
         global.chatArray= []
         if (this.state.chatData.length !== 0) {
@@ -226,12 +209,12 @@ export default class Home extends Component {
         
     }
 
-
+    //  actual UI
 
     render() {
 
-            this.showChats();
-            this.showMessages();
+            this.showChats()
+            this.showMessages()
                        
             
             return (
@@ -287,10 +270,6 @@ export default class Home extends Component {
                 <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
                     <View style={styles.explanationText}>
                     <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
-
-                        {/* <Text style={styles.title}>Chat Modal</Text> */}
-
-                        {/* <Text style={styles.title}>{this.state.messages[0].message}</Text> */}
 
                         <Text style={styles.title}>{this.state.chat}</Text>
 
