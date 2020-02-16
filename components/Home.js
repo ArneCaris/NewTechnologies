@@ -98,7 +98,7 @@ export default class Home extends Component {
 
 
         this.socket.on('changeNameRequestResponse', (res) => {
-            console.log("102 changeNameRequestResponse", "res: ", res)
+            console.log("101 changeNameRequestResponse", "res: ", res)
             if (res.response === false) {
                 Alert.alert(
                     'Sorry, name not claimed.',
@@ -115,7 +115,7 @@ export default class Home extends Component {
                     this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
 
                 } else {
-                    console.log("something wrong with asyncstorage.")
+                    console.log("118 something wrong with asyncstorage.")
                 }
             }
                 
@@ -123,13 +123,13 @@ export default class Home extends Component {
 
         // recieve chats and latest messages
         this.socket.on('chatRequestResponse', (res) => {
-            console.log("chatRequestResponse triggered")
+            console.log("chatRequestResponse triggered")//, res)
             if(res.chats.length != 0) {
 
-                this.setState({chatData: res.chats}) //console.log("131 map from socket: " + this.state.chatData[i][0].chat)
+                this.setState({chatData: res.chats}) //console.log("129 map from socket: " + this.state.chatData[i][0].chat)
 
             } else {
-                console.log("133 ERROR retrieving the chats!!!!")
+                console.trace("132 ERROR retrieving the chats!!!!")
             }
         })
 
@@ -156,6 +156,8 @@ export default class Home extends Component {
         global.chatArray= []
         if (this.state.chatData.length !== 0) {
             global.chatArray = this.state.chatData.map((latestMessage, i) => {
+                // console.log("show chats, latestMessage: ", latestMessage)
+
 
                 return(
                     <TouchableOpacity key={latestMessage[0].chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage[latestMessage.length - 1].chat, showChatModal : true})}>
@@ -189,10 +191,12 @@ export default class Home extends Component {
                     // } else {
                     //     time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
                     // }
+
+                    const random = Math.random() * -9999999999 + 9999999999;
                 
                     if (chat.chat === this.state.chat) {
                         return(
-                            <View key={chat.message + i} style={styles.chatBar} >
+                            <View key={chat.displayName+ chat.message + random} style={styles.chatBar} >
                                 <Text style={styles.name} >{chat.displayName}</Text>
                                 <Text style={styles.message}>{chat.message}</Text>
                                 {/* <Text>{time}</Text> */}
@@ -295,7 +299,7 @@ export default class Home extends Component {
                             onChangeText={(message) => this.setState({ message }, () => console.log(this.state.message))}
                             vale={this.state.message}
                         ></TextInput>
-                        <Button styel={styles.addbutton} title=">" onPress={() => {console.log("OPEN MADAL: send message pressed"); this.setState({message: ''})} }></Button>
+                        <Button styel={styles.addbutton} title=">" onPress={() => this.sendMessage() }></Button>
 
                     </View>
                 </Modal>
