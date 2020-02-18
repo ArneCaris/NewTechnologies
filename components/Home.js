@@ -1,5 +1,5 @@
-import React, {Component, useEffect, useState} from 'react';
-import { Image, Modal, Button, TouchableOpacity, BackHandler } from 'react-native';
+import React, {Component} from 'react';
+import { Modal, Button, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
@@ -14,6 +14,7 @@ export default class Home extends Component {
             chats: [],
             messages: [{message: "no messages..."}],
             chatData: [],
+            sortedChats: [],
             showWelcomeModal: false,
             showChangeNameModal: false,
             showChatModal: false,
@@ -126,7 +127,22 @@ export default class Home extends Component {
             console.log("chatRequestResponse triggered")//, res)
             if(res.chats.length != 0) {
 
-                this.setState({chatData: res.chats}) //console.log("129 map from socket: " + this.state.chatData[i][0].chat)
+                let sortedChats = [];
+                res.chats.map( //data => console.log(data)
+                (latestMessage, i) => {
+                        sortedChats.push(latestMessage[latestMessage.length -1])
+                })
+
+                sortedChats.sort((a, b) => {
+                    return new Date(b.timeStamp) - new Date(a.timeStamp)
+
+                });
+                console.log("this is sortedChats: ",sortedChats);
+
+
+
+
+                this.setState({chatData: res.chats , sortedChats}) //console.log("129 map from socket: " + this.state.chatData[i][0].chat)
 
             } else {
                 console.trace("132 ERROR retrieving the chats!!!!")
@@ -155,14 +171,15 @@ export default class Home extends Component {
     showChats() {
         global.chatArray= []
         if (this.state.chatData.length !== 0) {
-            global.chatArray = this.state.chatData.map((latestMessage, i) => {
-                // console.log("show chats, latestMessage: ", latestMessage)
+                        
+            global.chatArray = this.state.sortedChats.map((latestMessage, i) => {
 
+                let fo = Math.random() * -9999999999999 + 99999999999999;
 
                 return(
-                    <TouchableOpacity key={latestMessage[0].chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage[latestMessage.length - 1].chat, showChatModal : true})}>
-                        <Text style={styles.name} >{latestMessage[latestMessage.length - 1].chat}</Text>
-                        <Text style={styles.message}>{latestMessage[latestMessage.length - 1].message}</Text>
+                    <TouchableOpacity key={fo + latestMessage.chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
+                        <Text style={styles.name} >{latestMessage.chat}</Text>
+                        <Text style={styles.message}>{latestMessage.message}</Text>
                     </TouchableOpacity>
                 )
 
@@ -170,6 +187,10 @@ export default class Home extends Component {
         }
         
     }
+
+
+
+
     showMessages() {
         global.messageArray= []
         if (this.state.chatData.length !== 0) {
@@ -177,29 +198,29 @@ export default class Home extends Component {
                 return data.map(chat => {
                     // console.log("logging data",chat.chat, this.state.chat, chat.chat === this.state.chat)
 
-                    // let d = new Date(chat.timeStamp)
+                    let d = new Date(chat.timeStamp)
                 
-                    // const date = d.getDate()
-                    // const month = d.getMonth() + 1
-                    // const year = d.getFullYear()
-                    // const hours = d.getHours()
-                    // const minutes = d.getMinutes()
-                    // let time = '';
-                    // // console.log("d=="+ d)
-                    // if(d === NaN || d === null) {
-                    //     time = ''
-                    // } else {
-                    //     time = hours + ":" + minutes + " " + date + "/" + month + "/" + year;
-                    // }
+                    const date = d.getDate()
+                    const month = d.getMonth() + 1
+                    const year = d.getFullYear()
+                    const hours = d.getHours()
+                    const minutes = d.getMinutes()
+                    let time = '';
+                    // console.log("d=="+ d)
+                    if(d === NaN || d === null) {
+                        time = ''
+                    } else {
+                        time = hours + ":" + minutes + "   |   " + date + "/" + month + "/" + year;
+                    }
 
                     const random = Math.random() * -9999999999 + 9999999999;
                 
                     if (chat.chat === this.state.chat) {
                         return(
-                            <View key={chat.displayName+ chat.message + random} style={styles.chatBar} >
+                            <View key={chat.displayName + chat.message + random} style={styles.chatBar} >
+                                <Text>{time}</Text>
                                 <Text style={styles.name} >{chat.displayName}</Text>
                                 <Text style={styles.message}>{chat.message}</Text>
-                                {/* <Text>{time}</Text> */}
                             </View>
                         )
     
