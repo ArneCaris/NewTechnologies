@@ -27,7 +27,8 @@ export default class Home extends Component {
         this.changeNameRequest = this.changeNameRequest.bind(this);
         this.sendMessage = this.sendMessage.bind(this);
 
-        this.ENDPOINT = 'http://newtechproject.ddns.net:5000/';
+        this.ENDPOINT = 'http://newtechproject.ddns.net:5000/'
+        this.ENDPOINT_HTTPS = 'https://newtechproject.ddns.net:5001/';
 
         this.socket = ''
     }
@@ -43,6 +44,10 @@ export default class Home extends Component {
 
         var name = AsyncStorage.getItem('name');
 
+        // socket stuff starts here
+        this.socket = io(this.ENDPOINT);
+        // this.socket = io(this.ENDPOINT_HTTPS);
+
         if (name !== null) {
             name.then((ret) => {
                 console.log("AsyncStroge name: "+ ret)
@@ -57,9 +62,6 @@ export default class Home extends Component {
             console.log("name from async strage is NULL");
         }
 
-
-        // socket stuff starts here
-        this.socket = io(this.ENDPOINT);
 
         
         // this socket for name change
