@@ -44,13 +44,18 @@ const styles = StyleSheet.create({
         borderColor: '#d6d7da',
     },
     name: {
-        left: 75,
+        left: 45,
         top: 14,
         fontWeight: 'bold',
     },
     message: {
-        left: 75,
+        left: 45,
         top: 22,
+    },
+    timeStamp:{
+        marginTop: '7%',
+        alignSelf: 'flex-end',
+        fontSize: 12
     },
     title: {
         marginTop: -250,
