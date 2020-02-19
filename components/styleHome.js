@@ -1,6 +1,9 @@
 import {StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
+
+    // common
+
     container: {
         flex: 1,
     },
@@ -15,14 +18,6 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         backgroundColor: 'white' 
     },
-    title: {
-        marginTop: 40,
-        fontSize: 30,
-        color: "#a11485",
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
     backBtn: {
         alignSelf: 'flex-start',
         fontSize: 40,
@@ -35,33 +30,41 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         alignItems: 'center',
     },
+
+    // displayName modals
+
+    title: {
+        marginTop: 40,
+        fontSize: 30,
+        color: "#a11485",
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        textAlign: 'center',
+    },
     modalButton: {
         position: 'absolute',
         margin: 16,
         right: 10,
         bottom: 10,
     },
-    chatBar: {
-        height: 85,
+
+    // home 
+    chatBarHome: {
+        height: 80,
         borderRadius: 4,
         borderWidth: 0.5,
         borderColor: '#d6d7da',
-        flexDirection: 'row'
     },
     name: {
-        left: 45,
-        top: 14,
+        left: 25,
+        top: 10,
         fontWeight: 'bold',
     },
     message: {
         flexShrink: 1,
-        left: 45,
-        top: 22,
-    },
-    timeStamp:{
-        marginTop: '7%',
-        alignSelf: 'flex-end',
-        fontSize: 12
+        left: 25,
+        alignSelf: 'flex-start',
+        top: 25,
     },
     text: {
         top: 50,
@@ -82,14 +85,43 @@ const styles = StyleSheet.create({
         borderColor: '#a11485',
         marginTop: 50,
     },
-    chatTitle: {
+
+    
+    // chat
+    chatTitleContainter: {
         flex: 1,
         marginLeft: 10,
         marginRight: 10, 
     },
+    titleChat: {
+        marginTop: -20,
+        fontSize: 30,
+        color: "#a11485",
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        textAlign: 'center',
+    },
     scrollContainer: {
         flex: 5,
-        height: 600,
+        // height: 600,
+    },
+    chatBar: {
+        height: 100,
+        borderRadius: 4,
+        borderWidth: 0.5,
+        borderColor: '#d6d7da',
+        flexDirection: 'row'
+    },
+    messageChat: {
+        flex: 1,
+        // left: -25,
+        // alignSelf: 'flex-start',
+        top: 35,
+    },
+    timeStamp:{
+        marginTop: '7%',
+        alignSelf: 'flex-end',
+        fontSize: 12
     },
     sendMessageContainer: {
         alignItems: 'center',
@@ -106,7 +138,6 @@ const styles = StyleSheet.create({
         fontSize: 40
     },
 
-    
 });
 
 

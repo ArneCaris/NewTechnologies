@@ -185,7 +185,7 @@ export default class Home extends Component {
                 let fo = Math.random() * -9999999999999 + 99999999999999;
 
                 return(
-                    <TouchableOpacity key={fo + latestMessage.chat + i} style={styles.chatBar} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
+                    <TouchableOpacity key={fo + latestMessage.chat + i} style={styles.chatBarHome} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
                         <Text style={styles.name} >{latestMessage.chat}</Text>
                         <Text style={styles.message}>{latestMessage.message}</Text>
                     </TouchableOpacity>
@@ -232,11 +232,12 @@ export default class Home extends Component {
                 
                     if (chat.chat === this.state.chat) {
                         return(
-                            <View key={chat.displayName + chat.message + random} style={styles.chatBar} >
-                                <Text style={styles.name} >{chat.displayName}</Text>
-                                <Text style={styles.message}>{chat.message}</Text>
-                                <Text style={styles.timeStamp}>{time}</Text>
-                            </View>
+                                <View key={chat.displayName + chat.message + random} style={styles.chatBar} >
+                                    <Text style={styles.name} >{chat.displayName}</Text>
+                                    <Text style={styles.messageChat}>{chat.message}</Text>
+                                    <Text style={styles.timeStamp}>{time}</Text>
+                                </View>
+                            
                         )
     
                     }
@@ -312,15 +313,16 @@ export default class Home extends Component {
 
 {/* OPEN CHAT modal */}
                 <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
-                    <View style={styles.chatTitle}>
+                    <View style={styles.chatTitleContainter}>
                         <TouchableOpacity onPress={() => this.setState({ showChatModal: false })}>
                             <Text style={styles.backBtn} size={500} color="#a11485" onPress={() => this.setState({ showChatModal: false })}>
-                            &#171;
-                        </Text>
+                                &#171;
+                            </Text>
                         </TouchableOpacity>
-                        <Text style={styles.title}>{this.state.chat}</Text>
+                        <Text style={styles.titleChat}>{this.state.chat}</Text>
 
                     </View>
+
                     <View style={styles.scrollContainer}>
                         <ScrollView 
                             ref={ref => this.scrollView = ref}
@@ -341,7 +343,6 @@ export default class Home extends Component {
                             onPress={() =>  this.scrollView.scrollToEnd({ animated: true })}
                             onSubmitEditing={() => this.sendMessage()}
                             onChangeText={(message) => this.setState({ message }, () => console.log(this.state.message))}
-                            vale={this.state.message}
                         ></TextInput>
                         <TouchableOpacity onPress={() => this.sendMessage()}>
                             <Text style={styles.addButton}> {">"} </Text>
