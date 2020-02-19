@@ -11,10 +11,21 @@ const styles = StyleSheet.create({
     },
     explanationText: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
         marginLeft: 10,
         marginRight: 10, 
+    },
+    title: {
+        marginTop: -40,
+        fontSize: 30,
+        color: "#a11485",
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        textAlign: 'center',
+    },
+    backBtn: {
+        alignSelf: 'flex-start',
+        fontSize: 40,
+        color: "#a11485"
     },
     headerText: {
         color: 'white',
@@ -23,19 +34,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         alignItems: 'center',
     },
-    scrollContainer: {
-        flex: 1,
-        marginBottom: 10,
-    },
     modalButton: {
         position: 'absolute',
         margin: 16,
         right: 10,
         bottom: 10,
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 500,
     },
     chatBar: {
         height: 85,
@@ -57,14 +60,6 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         fontSize: 12
     },
-    title: {
-        marginTop: -250,
-        fontSize: 30,
-        color: "#a11485",
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        textAlign: 'center',
-    },
     text: {
         top: 100,
         fontSize: 15,
@@ -85,7 +80,25 @@ const styles = StyleSheet.create({
         borderWidth: 1.1,
         borderColor: '#a11485',
         marginTop: 50,
-    }
+    },
+    scrollContainer: {
+        flex: 5,
+        height: 600,
+    },
+    sendMessageContainer: {
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    messageInput: {
+        flex: 1, 
+        alignSelf: 'flex-start'
+    },
+    addButton: {
+        flex: 1,
+        color: '#a11485',
+        alignSelf: 'flex-end',
+        fontSize: 40
+    },
 
     
 });

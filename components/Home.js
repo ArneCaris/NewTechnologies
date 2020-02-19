@@ -21,6 +21,7 @@ export default class Home extends Component {
             displayName: "",
             storedName: "",
             chat: "",
+            message: ''
         }
 
         this.submitNameRequest = this.submitNameRequest.bind(this);
@@ -164,8 +165,13 @@ export default class Home extends Component {
 
     // messaging
     sendMessage() {
-        this.socket.emit('sendMessage', {displayName: this.state.storedName, chat: this.state.chat, message: this.state.message, chats: this.state.chats})
-        this.setState({message: ''})
+        console.log("this is message in state:",this.state.message,"this is if it is !==", this.state.message !== '')
+        if (this.state.message !== ''){
+            this.socket.emit('sendMessage', {displayName: this.state.storedName, chat: this.state.chat, message: this.state.message, chats: this.state.chats})
+            this.setState({message: ''})
+        } else {
+            return
+        }
 
     }
     
@@ -200,13 +206,20 @@ export default class Home extends Component {
                 return data.map(chat => {
                     // console.log("logging data",chat.chat, this.state.chat, chat.chat === this.state.chat)
 
+                    function addZero(i) {
+                        if (i < 10) {
+                          i = "0" + i;
+                        }
+                        return i;
+                      }
+
                     let d = new Date(chat.timeStamp)
                 
                     const date = d.getDate()
                     const month = d.getMonth() + 1
                     const year = d.getFullYear()
-                    const hours = d.getHours()
-                    const minutes = d.getMinutes()
+                    const hours = addZero(d.getHours())
+                    const minutes = addZero(d.getMinutes())
                     let time = '';
                     // console.log("d=="+ d)
                     if(d === NaN || d === null) {
@@ -296,34 +309,37 @@ export default class Home extends Component {
 {/* OPEN CHAT modal */}
                 <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
                     <View style={styles.explanationText}>
-                    <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChatModal: false })} />
-
+                        <TouchableOpacity onPress={() => this.setState({ showChatModal: false })}>
+                            <Text style={styles.backBtn}> {"<<"} </Text>
+                        </TouchableOpacity>
                         <Text style={styles.title}>{this.state.chat}</Text>
 
-                     
+                    </View>
+                    <View style={styles.scrollContainer}>
+                        <ScrollView 
+                            ref={ref => this.scrollView = ref}
+                            onContentSizeChange={(contentWidth, contentHeight)=>{        
+                                this.scrollView.scrollToEnd({animated: true});
+                            }}
+                        >
+                            {messageArray}
+                        </ScrollView>
                     </View>
 
-                    <ScrollView 
-                        style={styles.scrollContainer}
-                        ref={ref => this.scrollView = ref}
-                        onContentSizeChange={(contentWidth, contentHeight)=>{        
-                            this.scrollView.scrollToEnd({animated: true});
-                        }}
-                    >
-                        {messageArray}
-                    </ScrollView>
-
-                    <View>
+                    <View style={styles.sendMessageContainer}>
                         <TextInput 
+                            style={styles.messageInput}
                             placeholder="type here...."
                             ref="displayName"
                             value={this.state.message}
+                            onPress={() =>  this.scrollView.scrollToEnd({ animated: true })}
                             onSubmitEditing={() => this.sendMessage()}
                             onChangeText={(message) => this.setState({ message }, () => console.log(this.state.message))}
                             vale={this.state.message}
                         ></TextInput>
-                        <Button styel={styles.addbutton} title=">" onPress={() => this.sendMessage() }></Button>
-
+                        <TouchableOpacity onPress={() => this.sendMessage()}>
+                            <Text style={styles.addButton}> {">"} </Text>
+                        </TouchableOpacity>
                     </View>
                 </Modal>
 
