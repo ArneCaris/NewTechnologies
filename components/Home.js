@@ -264,8 +264,6 @@ export default class Home extends Component {
                 <Modal visible={this.state.showWelcomeModal} animationType="slide">
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
-                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
-                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <TextInput
                             style={styles.TextInput}
                             placeholder="username                                             "
@@ -276,6 +274,8 @@ export default class Home extends Component {
                             onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
                             vale={this.state.displayName}
                         />
+                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
+                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <View style={styles.modalButton}>
                             <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.submitNameRequest() }/>
                         </View>
@@ -285,9 +285,12 @@ export default class Home extends Component {
 {/* CHANGE NAME while logged in modal */}
                 <Modal visible={this.state.showChangeNameModal} animationType="slide" onRequestClose={() => this.setState({ showChangeNameModal: false })}>
                     <View style={styles.explanationText}>
+                        <TouchableOpacity onPress={() => this.setState({ showChangeNameModal: false })}>
+                                <Text style={styles.backBtn} size={500} color="#a11485" onPress={() => this.setState({ showChangeNameModal: false })}>
+                                &#171;
+                            </Text>
+                        </TouchableOpacity>
                         <Text style={styles.title}>TRY YOUR LUCK</Text>
-                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
-                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <TextInput
                             style={styles.TextInput}
                             placeholder="username                                             "
@@ -298,9 +301,10 @@ export default class Home extends Component {
                             onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
                             value={this.state.displayName}
                         />
+                        <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
+                        <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <View style={styles.modalButton}>
                             <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.changeNameRequest() }/>
-                            <Button title="Nah, go back." size={100} color="#a11485" onPress={() => this.setState({ showChangeNameModal: false, displayName: this.state.storedName })} />
                         </View>
                     </View>
                 </Modal>
@@ -308,9 +312,11 @@ export default class Home extends Component {
 
 {/* OPEN CHAT modal */}
                 <Modal visible={this.state.showChatModal} animationType="slide"  onRequestClose={() => this.setState({ showChatModal: false })}>
-                    <View style={styles.explanationText}>
+                    <View style={styles.chatTitle}>
                         <TouchableOpacity onPress={() => this.setState({ showChatModal: false })}>
-                            <Text style={styles.backBtn}> {"<<"} </Text>
+                            <Text style={styles.backBtn} size={500} color="#a11485" onPress={() => this.setState({ showChatModal: false })}>
+                            &#171;
+                        </Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>{this.state.chat}</Text>
 
