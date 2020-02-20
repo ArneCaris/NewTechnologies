@@ -232,12 +232,11 @@ export default class Home extends Component {
                 
                     if (chat.chat === this.state.chat) {
                         return(
-                                <View key={chat.displayName + chat.message + random} style={styles.chatBar} >
-                                    <Text style={styles.name} >{chat.displayName}</Text>
-                                    <Text style={styles.messageChat}>{chat.message}</Text>
-                                    <Text style={styles.timeStamp}>{time}</Text>
-                                </View>
-                            
+                            <View key={chat.displayName + chat.message + random} style={styles.chatBar} >
+                                <Text style={styles.messageName} >{chat.displayName}</Text>
+                                <Text style={styles.messageChat}>{chat.message}</Text>
+                                <Text style={styles.timeStamp}>{time}</Text>
+                            </View>
                         )
     
                     }

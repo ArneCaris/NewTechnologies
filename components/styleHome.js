@@ -106,20 +106,28 @@ const styles = StyleSheet.create({
         // height: 600,
     },
     chatBar: {
-        height: 100,
+        height: 'auto',
         borderRadius: 4,
         borderWidth: 0.5,
         borderColor: '#d6d7da',
-        flexDirection: 'row'
+    },
+    messageName: {
+        flex:1,
+        left: 25,
+        top: 10,
+        fontWeight: 'bold',
+        // alignSelf: 'flex-start'
     },
     messageChat: {
         flex: 1,
-        // left: -25,
         // alignSelf: 'flex-start',
-        top: 35,
+        top: 20,
+        left: 25,
+        width: 370
     },
     timeStamp:{
-        marginTop: '7%',
+        flex: 1,
+        marginTop: 25,
         alignSelf: 'flex-end',
         fontSize: 12
     },
