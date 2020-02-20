@@ -46,7 +46,7 @@ export default class Home extends Component {
         var name = AsyncStorage.getItem('name');
 
         // socket stuff starts here
-        this.socket = io(this.ENDPOINT);
+        this.socket = io(this.ENDPOINT, { transports: ['websocket'], rejectUnauthorized: false });
         // this.socket = io(this.ENDPOINT_HTTPS);
 
         if (name !== null) {
@@ -265,6 +265,7 @@ export default class Home extends Component {
                     <View style={styles.explanationText}>
                         <Text style={styles.title}>Welcome to ChatApp!</Text>
                         <TextInput
+                            accessibilityLabel={'loginInput'}
                             style={styles.TextInput}
                             placeholder="username                                             "
                             maxLength={15}
@@ -277,7 +278,7 @@ export default class Home extends Component {
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
                         <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>
                         <View style={styles.modalButton}>
-                            <Button title="Let's go!" size={100} color="#a11485" onPress={() => this.submitNameRequest() }/>
+                            <Button accessibilityLabel={'loginButton'} title="Let's go!" size={100} color="#a11485" onPress={() => this.submitNameRequest() }/>
                         </View>
                     </View>
                 </Modal>

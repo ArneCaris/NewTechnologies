@@ -1,0 +1,8 @@
+{
+    "platformName": "Android",
+    "platformVersion": "10",
+    "deviceName": "OnePlus 7 Pro",
+    "automationName": "Appium",
+    "app": "C:\\Users\\gudenko\\Desktop\\Git\\SchoolProjects\\socket-version\\NewTechnologies\\android\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "autoGrantPermissions": true
+  }
