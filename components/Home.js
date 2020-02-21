@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import { Modal, Button, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-community/async-storage';
+import { Modal, Button, TouchableOpacity, AsyncStorage } from 'react-native';
+// import AsyncStorage from '@react-native-community/async-storage';
 import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
 import styles from './styleHome';
