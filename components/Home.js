@@ -202,12 +202,18 @@ export default class Home extends Component {
                     time = hours + ":" + minutes + "   |   " + date + "/" + month + "/" + year;
                 }
 
+                let FPMessage = latestMessage.message
+
+                if(FPMessage.length > 40) {
+                    FPMessage = FPMessage.substring(0, 40) + "..."
+                }
+
                 const random = Math.random() * -9999999999 + 9999999999;
 
                 return(
                     <TouchableOpacity key={random + latestMessage.chat + i} style={styles.chatBarHome} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
                         <Text style={styles.name} >{latestMessage.chat}</Text>
-                        <Text style={styles.messageChat}>{latestMessage.message}</Text>
+                        <Text style={styles.messageChat}>{FPMessage}</Text>
                         <Text style={styles.timeStamp}>{time}</Text>
                     </TouchableOpacity>
                 )
