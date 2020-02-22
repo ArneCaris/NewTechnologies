@@ -1,13 +1,11 @@
 import React, {Component} from 'react';
-import { Modal, Button, TouchableOpacity } from 'react-native';
+import { Modal, Button, TouchableOpacity, YellowBox, Text, View, TextInput, Alert, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
-import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
 import styles from './styleHome';
 
 
 export default class Home extends Component {
-
     constructor() {
         super();
         this.state = {
@@ -47,29 +45,32 @@ export default class Home extends Component {
 
         var name = AsyncStorage.getItem('name');
 
-        // socket stuff starts here
+        // socket setup starts here
         this.socket = io(this.ENDPOINT, { transports: ['websocket'], rejectUnauthorized: false });
+
+        // HTTPS not ready
         // this.socket = io(this.ENDPOINT_HTTPS);
 
+
+        //login & varification
         if (name !== null) {
             name.then((ret) => {
-                console.log("AsyncStroge name: "+ ret)
+                // console.log("AsyncStroge name: "+ ret)
                 if (ret !== null) {
                     this.setState({ storedName: ret }, () => this.socket.emit('loginRequest', {displayName: this.state.storedName}))
                 } else {
-                    this.setState({ showWelcomeModal: true }, () => console.log("showing the WELCOME modal."))
+                    this.setState({ showWelcomeModal: true })//, () => console.log("62 showing the WELCOME modal."))
                 }
 
             }).catch(err => alert(err.toString()));
         } else {
-            console.log("name from async strage is NULL");
+            console.log("67 name from async strage is NULL");
         }
 
 
         
-        // this socket for name change
+        // logging in
         this.socket.on("loginRequestResponse", res => {
-
             if (res.response === false) {
                 this.setState({showWelcomeModal: true});             
                
@@ -79,6 +80,7 @@ export default class Home extends Component {
             }
         });
 
+        // registering new name
         this.socket.on('submitNameRequestResponse', res => {
             console.log("91 submitNameRequestResponse", "res: ", res);
                 if (res.response === false) {
@@ -96,13 +98,13 @@ export default class Home extends Component {
                         setName.then(ret => {this.setState({storedName: res.name[0].displayName, chats: res.name[0].chats, showWelcomeModal: false}) });
                         this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
                     } else {
-                        console.log("107 something wrong with asyncstorage.")
+                        console.log("101 something wrong with asyncstorage.")
                     }
              
                 }
         })
 
-
+        // asking for name change
         this.socket.on('changeNameRequestResponse', (res) => {
             console.log("101 changeNameRequestResponse", "res: ", res)
             if (res.response === false) {
@@ -121,7 +123,7 @@ export default class Home extends Component {
                     this.socket.emit('chatRequest', {displayName: res.name[0].displayName, chats: res.name[0].chats})
 
                 } else {
-                    console.log("118 something wrong with asyncstorage.")
+                    console.log("126 something wrong with asyncstorage.")
                 }
             }
                 
@@ -131,36 +133,30 @@ export default class Home extends Component {
         this.socket.on('chatRequestResponse', (res) => {
             console.log("chatRequestResponse triggered")//, res)
             if(res.chats.length != 0) {
-
                 let sortedChats = [];
                 res.chats.map( //data => console.log(data)
                 (latestMessage, i) => {
                         sortedChats.push(latestMessage[latestMessage.length -1])
                 })
-
                 sortedChats.sort((a, b) => {
                     return new Date(b.timeStamp) - new Date(a.timeStamp)
 
                 });
                 console.log("this is sortedChats: ",sortedChats);
-
-
-
-
-                this.setState({chatData: res.chats , sortedChats}) //console.log("129 map from socket: " + this.state.chatData[i][0].chat)
+                this.setState({chatData: res.chats , sortedChats}) //console.log("146 map from socket: " + this.state.chatData[i][0].chat)
 
             } else {
-                console.trace("132 ERROR retrieving the chats!!!!")
+                console.trace("149 ERROR retrieving the chats!!!!")
             }
         })
-
     }
 
-    // displayNameRequest
+    // function to register/claim a name
     submitNameRequest() {
         this.socket.emit('submitNameRequest', { displayName : this.state.displayName})
     }
 
+    // function to change a name
     changeNameRequest() {
         this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
     }
@@ -184,12 +180,35 @@ export default class Home extends Component {
                         
             global.chatArray = this.state.sortedChats.map((latestMessage, i) => {
 
-                let fo = Math.random() * -9999999999999 + 99999999999999;
+                function addZero(i) {
+                    if (i < 10) {
+                      i = "0" + i;
+                    }
+                    return i;
+                  }
+
+                let d = new Date(latestMessage.timeStamp)
+            
+                const date = d.getDate()
+                const month = d.getMonth() + 1
+                const year = d.getFullYear()
+                const hours = addZero(d.getHours())
+                const minutes = addZero(d.getMinutes())
+                let time = '';
+
+                if(d === NaN || d === null) {
+                    time = ''
+                } else {
+                    time = hours + ":" + minutes + "   |   " + date + "/" + month + "/" + year;
+                }
+
+                const random = Math.random() * -9999999999 + 9999999999;
 
                 return(
-                    <TouchableOpacity key={fo + latestMessage.chat + i} style={styles.chatBarHome} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
+                    <TouchableOpacity key={random + latestMessage.chat + i} style={styles.chatBarHome} onPress={() => this.setState({chat: latestMessage.chat, showChatModal : true})}>
                         <Text style={styles.name} >{latestMessage.chat}</Text>
-                        <Text style={styles.message}>{latestMessage.message}</Text>
+                        <Text style={styles.messageChat}>{latestMessage.message}</Text>
+                        <Text style={styles.timeStamp}>{time}</Text>
                     </TouchableOpacity>
                 )
 
@@ -198,15 +217,12 @@ export default class Home extends Component {
         
     }
 
-
-
-
+    // displaying messages in open chat
     showMessages() {
         global.messageArray= []
         if (this.state.chatData.length !== 0) {
             global.messageArray = this.state.chatData.map((data, i) => {
                 return data.map(chat => {
-                    // console.log("logging data",chat.chat, this.state.chat, chat.chat === this.state.chat)
 
                     function addZero(i) {
                         if (i < 10) {
@@ -252,7 +268,6 @@ export default class Home extends Component {
     }
 
     //  actual UI
-
     render() {
 
             this.showChats()
