@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import { Modal, Button, TouchableOpacity, AsyncStorage } from 'react-native';
-// import AsyncStorage from '@react-native-community/async-storage';
+import { Modal, Button, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import { YellowBox, Text, View, TextInput, Alert, ScrollView} from 'react-native';
 import io from 'socket.io-client';
 import styles from './styleHome';
@@ -39,9 +39,11 @@ export default class Home extends Component {
 
     componentDidMount() {
         
-        YellowBox.ignoreWarnings([
-            'Unrecognized WebSocket connection option(s) `agent`, `perMessageDeflate`, `pfx`, `key`, `passphrase`, `cert`, `ca`, `ciphers`, `rejectUnauthorized`. Did you mean to put these under `headers`?'
-        ]);
+        YellowBox.ignoreWarnings(
+            ['Unrecognized WebSocket connection option(s) `agent`, `perMessageDeflate`, `pfx`, `key`, `passphrase`, `cert`, `ca`, `ciphers`, `rejectUnauthorized`. Did you mean to put these under `headers`?'],
+            ["Warning: AsyncStorage has been extracted from react-native core and will be removed in a future release. It can now be installed and imported from '@react-native-community/async-storage' instead of 'react-native'. See https://github.com/react-native-community/react-native-async-storage"],
+            
+        );
 
         var name = AsyncStorage.getItem('name');
 
