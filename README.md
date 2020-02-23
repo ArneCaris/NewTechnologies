@@ -3,15 +3,15 @@ React native unit &amp; integration testing on a mobile chat application.
 
 # How to:
 
-### Install node dependacies
+### Install node dependencies
 
 ```
 npm i
 ```
 
-### Setup [React Native](https://facebook.github.io/react-native/) enviroment by following instrunction [here](https://facebook.github.io/react-native/docs/getting-started)
+### Setup [React Native](https://facebook.github.io/react-native/) environment by following instruction [here](https://facebook.github.io/react-native/docs/getting-started)
 
-### Client has been tested only on Android deveces therefore we build for android:
+### Client has been tested only on Android devices therefore we build for android:
 ```
 npx react-native run-android
 ```
