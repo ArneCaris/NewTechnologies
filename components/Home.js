@@ -25,6 +25,7 @@ export default class Home extends Component {
         this.submitNameRequest = this.submitNameRequest.bind(this);
         this.changeNameRequest = this.changeNameRequest.bind(this);
         this.sendMessage = this.sendMessage.bind(this);
+        this.profanityCheck = this.profanityCheck.bind(this);
 
         this.ENDPOINT = 'http://newtechproject.ddns.net:5000/'
         this.ENDPOINT_HTTPS = 'https://newtechproject.ddns.net:5001/';
@@ -151,14 +152,50 @@ export default class Home extends Component {
         })
     }
 
+    // name profanity check
+    profanityCheck() {    
+        const bigNONO = ["fuck", "nigger", "nigga", "racist", "pussy", "penis", "rape", "vagina", "admin", "shit", "chatapp" ]
+
+        let ogName = this.state.displayName;
+        let nameToTest = ogName.trim().toLowerCase();
+
+        return new Promise((resolve, reject) => {
+            for(let i = 0; i < bigNONO.length; i++) {
+                if(nameToTest.includes(bigNONO[i])) {
+                    Alert.alert(
+                        'Warning',
+                        `${ogName} not allowed as a Display Name`,
+                        [
+                            {text: 'OK', onPress: () => {console.log('Warning OK Pressed'); this.setState({displayName: ''})}},
+                        ],
+                        {cancelable: false},
+                        );
+                    reject(false).catch((err) => {throw err})
+                }
+    
+            }
+            resolve(true)
+        })     
+    }
+
     // function to register/claim a name
     submitNameRequest() {
-        this.socket.emit('submitNameRequest', { displayName : this.state.displayName})
+        const check = this.profanityCheck();
+        check.then((result) => {
+            if (result) {
+                this.socket.emit('submitNameRequest', { displayName : this.state.displayName})
+            }
+        }).catch((err) => console.log("190 promise error", err))
     }
 
     // function to change a name
     changeNameRequest() {
-        this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
+        const check = this.profanityCheck();
+        check.then((result) => {
+            if (result) {
+                this.socket.emit('changeNameRequest', {newDisplayName : this.state.displayName, oldDisplayName : this.state.storedName})
+            }
+        }).catch((err) => console.log("200 promise error", err))
     }
 
     // messaging
@@ -295,8 +332,8 @@ export default class Home extends Component {
                             ref="displayName"
                             value={this.state.displayName}
                             onSubmitEditing={() => this.submitNameRequest()}
-                            onChangeText={(displayName) => this.setState({ displayName }, () => console.log(this.state.displayName))}
-                            vale={this.state.displayName}
+                            onChangeText={(displayName) => this.setState({ displayName }, () => console.log(displayName))}
+                            value={this.state.displayName}
                         />
                         <Text style={styles.text}>Please choose a username for yourself.{"\n"}This can be absolutely anything!{"\n"}If your username already exists you can choose to either choose a different username or go on a merry adventure with a username that someone else used before you.</Text>
                         <Text style={styles.noteMsg}>{"\n\n"}NOTE! Messages and chats will remain with the username when you choose to have a different one!</Text>

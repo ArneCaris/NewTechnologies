@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     header: {
         backgroundColor: '#a11485',
         alignItems: 'flex-start',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     explanationText: {
         flex: 1,
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
         fontSize: 22,
         padding: 26,
         fontWeight: 'bold',
-        alignItems: 'center',
+        alignItems: 'center'
     },
 
     // displayName modals
@@ -39,13 +39,13 @@ const styles = StyleSheet.create({
         color: "#a11485",
         fontWeight: 'bold',
         alignSelf: 'center',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     modalButton: {
         position: 'absolute',
         margin: 16,
         right: 10,
-        bottom: 10,
+        bottom: 10
     },
 
     // home 
@@ -53,37 +53,37 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 4,
         borderWidth: 0.5,
-        borderColor: '#d6d7da',
+        borderColor: '#d6d7da'
     },
     name: {
         left: 25,
         top: 10,
-        fontWeight: 'bold',
+        fontWeight: 'bold'
     },
     message: {
         flexShrink: 1,
         left: 25,
         alignSelf: 'flex-start',
-        top: 25,
+        top: 25
     },
     text: {
         top: 50,
         fontSize: 15,
         alignSelf: 'center',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     noteMsg: {
         top: 50,
         fontSize: 20,
         fontWeight: 'bold',
         alignSelf: 'center',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     TextInput: {
         borderRadius: 2,
         borderWidth: 1.1,
         borderColor: '#a11485',
-        marginTop: 50,
+        marginTop: 50
     },
 
     
@@ -99,28 +99,25 @@ const styles = StyleSheet.create({
         color: "#a11485",
         fontWeight: 'bold',
         alignSelf: 'center',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     scrollContainer: {
-        flex: 5,
-        // height: 600,
+        flex: 5
     },
     chatBar: {
         height: 'auto',
         borderRadius: 4,
         borderWidth: 0.5,
-        borderColor: '#d6d7da',
+        borderColor: '#d6d7da'
     },
     messageName: {
         flex:1,
         left: 25,
         top: 10,
-        fontWeight: 'bold',
-        // alignSelf: 'flex-start'
+        fontWeight: 'bold'
     },
     messageChat: {
         flex: 1,
-        // alignSelf: 'flex-start',
         top: 20,
         left: 25,
         width: 370
@@ -128,12 +125,13 @@ const styles = StyleSheet.create({
     timeStamp:{
         flex: 1,
         marginTop: 25,
+        marginRight: 10,
         alignSelf: 'flex-end',
         fontSize: 12
     },
     sendMessageContainer: {
         alignItems: 'center',
-        flexDirection: 'row',
+        flexDirection: 'row'
     },
     messageInput: {
         flex: 1, 
